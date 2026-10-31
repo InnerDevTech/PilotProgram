@@ -16,13 +16,13 @@ Built over 12 weeks as a FocusedAI internship project, in seven sprints.
 
 | Sprint | Weeks | Focus | Status |
 | --- | --- | --- | --- |
-| [0 — Setup and plan](Sprint-0/sprint-0-wiki.html) | 1 | Tools installed, plan made, parts ordered | In progress |
-| [1 — Buttons and screen](Sprint-1/sprint-1-wiki.html) | 2–3 | Buttons and knob drive a live projector screen | In progress |
-| [2 — Hand sensor](Sprint-2/sprint-2-wiki.html) | 4–5 | 16 IR beams show where a hand is | Not started |
-| [3 — Camera and calibration](Sprint-3/sprint-3-wiki.html) | 6–7 | Camera sees marker objects, lined up with the projection | Not started |
-| [4 — Physics loop](Sprint-4/sprint-4-wiki.html) | 8–9 | Balls bounce off hands and objects | Not started |
-| [5 — Polish and proof](Sprint-5/sprint-5-wiki.html) | 10–11 | Stable, documented, tested | Not started |
-| [6 — Showcase](Sprint-6/sprint-6-wiki.html) | 12 | Presentation and reflection | Not started |
+| [0 — Setup and plan](wiki/sprint-0.html) | 1 | Tools installed, plan made, parts ordered | In progress |
+| [1 — Buttons and screen](wiki/sprint-1.html) | 2–3 | Buttons and knob drive a live projector screen | In progress |
+| [2 — Hand sensor](wiki/sprint-2.html) | 4–5 | 16 IR beams show where a hand is | Not started |
+| [3 — Camera and calibration](wiki/sprint-3.html) | 6–7 | Camera sees marker objects, lined up with the projection | Not started |
+| [4 — Physics loop](wiki/sprint-4.html) | 8–9 | Balls bounce off hands and objects | Not started |
+| [5 — Polish and proof](wiki/sprint-5.html) | 10–11 | Stable, documented, tested | Not started |
+| [6 — Showcase](wiki/sprint-6.html) | 12 | Presentation and reflection | Not started |
 
 Started 9 October 2026.
 
@@ -46,10 +46,27 @@ tests/test_bridge.py         18 tests, no hardware needed
 tests/test_projector.py      16 tests, no projector needed
 requirements.txt
 
-index.html                   wiki home, open this first
-wiki.css                     shared styling for every wiki page
-Sprint-0/ ... Sprint-6/      one wiki page per sprint
+wiki/index.html              wiki home, open this first
+wiki/wiki.css                shared styling for every wiki page
+wiki/sprint-0.html ... -6    one wiki page per sprint
+index.html                   redirect to wiki/index.html, nothing else
 ```
+
+Two files are named `index.html` and they are unrelated: `web/index.html` is the
+live desk page the projector shows, `wiki/index.html` is the sprint wiki home.
+
+The project also carries four small files that are easy to mistake for clutter:
+
+| File | What it is for |
+| --- | --- |
+| `.gitignore` | Keeps `__pycache__/` and the kiosk browser profile out of the repo |
+| `.gitattributes` | Normalises line endings — `.ino` as LF, `.ps1` as CRLF. Do not delete it: the wiki pages contain `–` and `·` and this is part of what keeps them intact |
+| `.vscode/settings.json` | Pins the Live Server port to 5501 so everyone previews the wiki on the same URL |
+| `LICENSE` | The project licence |
+
+`__pycache__/` folders are Python's compiled bytecode cache. They are generated
+every time the bridge or the tests run, are already ignored by git, and can be
+deleted at any time — Python rebuilds them on the next run.
 
 Arriving in later sprints: `hand_sensor/` (Sprint 2); `bridge/calibrate.py`,
 `bridge/make_markers.py` and `objects.json` (Sprint 3); `web/physics.js` and
@@ -163,8 +180,9 @@ reliably but room light does not.
 
 ## The sprint wiki
 
-**Open [`index.html`](index.html) in a browser.** That is the home page, and every
-sprint page links back to it and across to the others.
+**Open [`wiki/index.html`](wiki/index.html) in a browser.** That is the home page, and
+every sprint page links back to it and across to the others. Opening the `index.html`
+at the project root works too — it just forwards you there.
 
 Every sprint page has the same four sections:
 
@@ -185,8 +203,8 @@ you go, and it is the part that matters most at the showcase.
 - Mark a step or test done by changing `class="status todo"` to `class="status done"`,
   and the cell text to `Done` or `Pass`.
 - Update a sprint's status in **two** places: the `Status` field on the sprint page and
-  the table on `index.html`.
-- All styling lives in `wiki.css` — change it once and every page follows.
+  the table on `wiki/index.html`.
+- All styling lives in `wiki/wiki.css` — change it once and every page follows.
 - Save these files as **UTF-8**. They contain `–` and `·`; an editor that saves as ANSI
   will turn those into `â€“` and `Â·` across every page.
 
