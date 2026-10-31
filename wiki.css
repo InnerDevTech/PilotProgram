@@ -1,0 +1,53 @@
+:root {
+  --bg: #ffffff; --panel: #f5f7fa; --text: #1c2430; --muted: #5b6676;
+  --line: #dde3ea; --accent: #1f4e79; --ok: #1e7b3c; --todo: #b25e00;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text); background: var(--bg); }
+.wrap { display: flex; max-width: 1100px; margin: 0 auto; }
+
+nav { width: 220px; flex-shrink: 0; padding: 24px 16px; border-right: 1px solid var(--line); position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+nav h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 8px; border: 0; padding: 0; }
+nav a { display: block; padding: 4px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+nav a:hover { text-decoration: underline; }
+nav a.here { color: var(--text); font-weight: 600; }
+nav a + h2 { margin-top: 24px; }
+
+main { flex: 1; padding: 24px 32px 64px; min-width: 0; }
+h1 { margin: 0 0 4px; font-size: 28px; }
+.sub { color: var(--muted); margin: 0 0 24px; }
+h2 { border-bottom: 1px solid var(--line); padding-bottom: 6px; margin-top: 40px; color: var(--accent); }
+h3 { font-size: 17px; margin: 28px 0 8px; }
+
+.infobox { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; }
+.infobox dt { font-weight: 600; float: left; width: 110px; clear: left; }
+.infobox dd { margin: 0 0 4px 110px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 12px 0; }
+th, td { border: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: top; }
+th { background: var(--panel); }
+td.day { width: 44px; text-align: center; }
+
+code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--panel); border-radius: 4px; padding: 1px 4px; }
+
+.status { font-weight: 600; font-size: 13px; }
+.status.todo { color: var(--todo); }   /* use for "To do" / "In progress" */
+.status.done { color: var(--ok); }     /* use for "Done" / "Pass" */
+
+/* Checklists: add class="done" to an <li> to tick it. */
+ul.check { list-style: none; padding-left: 0; margin: 12px 0; }
+ul.check li { position: relative; padding: 2px 0 2px 26px; }
+ul.check li::before { content: "\2610"; position: absolute; left: 0; font-size: 18px; color: var(--muted); }
+ul.check li.done::before { content: "\2611"; color: var(--ok); }
+
+.note { background: var(--panel); border-left: 3px solid var(--todo); border-radius: 0 6px 6px 0; padding: 10px 14px; margin: 12px 0; }
+.fill { border: 2px dashed var(--line); border-radius: 6px; padding: 12px 16px; color: var(--muted); min-height: 60px; }
+
+@media (max-width: 760px) {
+  .wrap { display: block; }
+  nav { position: static; width: auto; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 16px; }
+  main { padding: 16px; }
+  .infobox dt { float: none; width: auto; }
+  .infobox dd { margin: 0 0 8px; }
+  main table { display: block; overflow-x: auto; }
+}

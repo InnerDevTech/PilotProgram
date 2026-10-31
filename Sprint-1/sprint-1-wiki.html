@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 1</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 1</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a class="here">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 1: Buttons and screen</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>The four buttons and the knob control the projector screen from real hardware.</dd>
+      <dt>Demo</dt><dd>From the physical buttons, show the clock, start the timer, set the minutes with the knob, and say the time out loud.</dd>
+      <dt>Weeks</dt><dd>Weeks 2 and 3</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">In progress</span></dd>
+    </dl>
+
+    <h3>User stories</h3>
+    <ul>
+      <li>As a user, I press button 1 to change screens.</li>
+      <li>As a user, I turn the knob to choose the timer minutes.</li>
+      <li>As a user, I press button 2 to start and pause, and button 3 to reset.</li>
+    </ul>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Build the button circuit on a breadboard: 4 buttons on pins 2 to 5, knob on A0 (README: Wiring section).</td><td>Multimeter shows the right voltages</td><td class="status done">Done</td></tr>
+      <tr><td class="day">2</td><td>Open <code>arduino/jarvis_desk/jarvis_desk.ino</code> and upload it to the Arduino Uno.</td><td>Serial Monitor shows <code>BTN 1</code> when button 1 is pressed</td><td class="status done">Done</td></tr>
+      <tr><td class="day">3</td><td>Test each button and the knob in the Serial Monitor. Note any bounce or missed press.</td><td>Every button prints one line per press</td><td class="status done">Done</td></tr>
+      <tr><td class="day">4</td><td>Run <code>python bridge/jarvis_bridge.py</code>. Confirm the page says "Arduino connected".</td><td>Top right says "Arduino connected"</td><td class="status done">Done</td></tr>
+      <tr><td class="day">5</td><td>Test the flow: screen change, start, pause, reset, speak. Write the bugs on cards.</td><td>Bug list with each card assigned</td><td class="status done">Done</td></tr>
+      <tr><td class="day">6</td><td>Fix the debounce if buttons bounce. Adjust <code>DEBOUNCE_MS</code> in the sketch.</td><td>Each press counts once, 20 presses in a row</td><td class="status done">Done</td></tr>
+      <tr><td class="day">7</td><td>Mount the buttons and knob in a box or on a board so they stay put.</td><td>Buttons do not move when pressed</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Test with a classmate who has never seen the project. Watch without helping. Note what they struggle with.</td><td>Five things the tester did, written down</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">9</td><td>Make the fixes from the test. Add a short "how to use" card near the buttons.</td><td>Second tester completes the tasks</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo. Write retrospective notes.</td><td>Demo passes the checklist</td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>These come straight from the sprint's demo checklist. Each one is a thing you do and a thing you should see.</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Bridge sees the Arduino</td><td><code>python bridge/jarvis_bridge.py</code></td><td>Top right says "Arduino connected"; clock shows on the projector</td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Button 1 cycles the screens</td><td>Press button 1 three times</td><td>Home → Timer → Stopwatch → Home</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Knob sets the minutes</td><td>Turn the knob from one end to the other</td><td>Minutes read 1 at one end and 60 at the other, smoothly between</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Start and pause</td><td>Press button 2, then button 2 again</td><td>Timer starts counting, then freezes</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Reset</td><td>Press button 3 while the timer is paused</td><td>Timer returns to the minutes set by the knob</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Speak the time</td><td>Press button 4</td><td>The current time is spoken out loud</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>Timer beeps at zero</td><td>Set 1 minute, press button 2, wait</td><td>Beeps when it reaches zero</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>Debounce</td><td>Press each button 20 times in a row</td><td>Exactly 20 presses register, no doubles, no misses</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Repeatability</td><td>Run T1 to T7 three times in a row</td><td>All pass each time, no errors in the bridge window</td><td>[pass/fail]</td></tr>
+      <tr><td>T10</td><td>New person can use it</td><td>Hand it to a classmate with only the "how to use" card</td><td>They set a timer without being told how</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 1 the projector screen should be driven entirely by real hardware — no keyboard. Four buttons on pins 2 to 5 and a knob on A0 feed the Arduino Uno, the bridge passes those presses to the page, and the page responds: button 1 cycles Home, Timer and Stopwatch; the knob picks 1 to 60 minutes; buttons 2 and 3 start, pause and reset; button 4 speaks the time; the timer beeps at zero.</p>
+    <p>The buttons should be mounted so they do not shift when pressed, and each press should count exactly once — debounce handled in the sketch rather than ignored. A classmate who has never seen the project should be able to set a timer using only the "how to use" card.</p>
+
+    <h3>Demo checklist</h3>
+    <ul class="check">
+      <li>Clock shows on the projector.</li>
+      <li>Button 1 cycles Home, Timer, Stopwatch.</li>
+      <li>Knob sets the minutes, 1 to 60.</li>
+      <li>Button 2 starts and pauses. Button 3 resets.</li>
+      <li>Button 4 says the time.</li>
+      <li>The timer beeps at zero.</li>
+    </ul>
+
+    <h3>Definition of done</h3>
+    <p>All checklist items pass three times in a row, with no code errors in the bridge window.</p>
+
+    <div class="note"><strong>Risk to watch:</strong> the Serial Monitor is open — it blocks the bridge and you get "Could not use COM3". Close it before starting the bridge, and put that on the setup card.</div>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>

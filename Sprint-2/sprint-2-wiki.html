@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 2</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 2</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a class="here">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 2: Hand sensor</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>16 IR beams report where a hand is, and a dot follows it on the desk page.</dd>
+      <dt>Demo</dt><dd>Move a hand across the frame. The glowing dot follows and the Serial Monitor shows the matching beam pattern.</dd>
+      <dt>Weeks</dt><dd>Weeks 4 and 5</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+    </dl>
+
+    <h3>User stories</h3>
+    <ul>
+      <li>As a user, my hand over the desk shows a glowing dot on the projection.</li>
+      <li>As a user, the sensor ignores room light changes after I press C to recalibrate.</li>
+    </ul>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Build one beam first (one emitter, one receiver, one 220 ohm and one 10 kilohm resistor). Measure the voltages (Build Guide section 6).</td><td>Clear reads about 3 to 4.5 V, covered reads under 0.5 V</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Connect that one beam to A0 on the Arduino Mega. Upload <code>arduino/hand_sensor/hand_sensor.ino</code>.</td><td><code>BEAMS</code> line changes when the beam is blocked</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Build the X beams (8 of them) on the breadboard. Test each one.</td><td>Each X beam prints a <code>1</code> when blocked</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Build the Y beams (8 more). Test all 16 with a pencil.</td><td>16 digits change correctly</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Mount the frame and the emitters and receivers (Build Guide section 5). Fix each beam so it stays in line.</td><td>Pencil test passes on every beam, frame does not move</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Power the emitters from the 5 V supply, with grounds joined. Check the Arduino does not reset.</td><td>No resets over 10 minutes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Start the bridge with the real Arduino (<code>python bridge/jarvis_bridge.py --desk</code>). The desk page should show "Hand sensor: connected".</td><td>Hand dot appears when a hand is over the desk</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Tune the thresholds <code>BLOCKED_BELOW</code> and <code>CLEAR_ABOVE</code> in the sketch so a hand is detected reliably but room light does not trigger it.</td><td>Hand detected 9 times out of 10, no false hand over 5 minutes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">9</td><td>Test the hand position with five marked spots on the desk. Write the error for each spot.</td><td>Average error under 6 cm (one beam spacing)</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>These come straight from the sprint's demo checklist, plus the two measurements the plan asks for (detection rate and position error).</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Single beam voltage range</td><td>Measure the receiver pin clear, then covered</td><td>Clear 3 to 4.5 V, covered under 0.5 V</td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>All 16 beams report</td><td>Block each beam in turn with a pencil, watch the <code>BEAMS</code> line</td><td>Each beam reads <code>1</code> when blocked and <code>0</code> when clear</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Hand dot follows across X</td><td>Move a hand left to right over the desk</td><td>Dot moves left to right with it</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Hand dot follows across Y</td><td>Move a hand top to bottom over the desk</td><td>Dot moves top to bottom with it</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Recalibration works</td><td>Clear the desk, press C</td><td>Dot disappears and stays gone with an empty desk</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Detection rate</td><td>Put a hand over the desk 10 separate times</td><td>Detected at least 9 times out of 10</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>Position accuracy</td><td>Hold a hand over 5 marked spots, measure dot to hand each time</td><td>Average error under 6 cm</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>No false hands</td><td>Leave the desk empty for 5 minutes with the bridge running</td><td>No dot appears, no <code>WARNING</code> lines in the Serial Monitor</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Power stability</td><td>Run all 16 emitters from the 5 V supply for 10 minutes</td><td>The Arduino does not reset</td><td>[pass/fail]</td></tr>
+      <tr><td>T10</td><td>Room light rejection</td><td>Turn the room lights on and off during a run</td><td>No false hand; if it drifts, pressing C fixes it</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 2 a grid of 16 IR beams — 8 across X, 8 across Y — should be mounted in a fixed frame around the desk and wired to the Arduino Mega. Blocking any beam flips its digit in the <code>BEAMS</code> line, and the crossing point of the blocked X and Y beams becomes a hand position that the desk page draws as a glowing dot.</p>
+    <p>The dot should track a real hand to within about one beam spacing (6 cm) and should be there roughly nine times out of ten. Just as important, it should <em>not</em> appear when the desk is empty: the thresholds <code>BLOCKED_BELOW</code> and <code>CLEAR_ABOVE</code> need tuning so room light does not read as a hand, and pressing C should re-baseline the sensor when the lighting changes.</p>
+    <p>No camera and no physics yet — the dot is the whole deliverable.</p>
+
+    <h3>Demo checklist</h3>
+    <ul class="check">
+      <li>All 16 beams report a <code>1</code> when blocked and <code>0</code> when clear.</li>
+      <li>Hand dot follows a hand from left to right and top to bottom.</li>
+      <li>Pressing C recalibrates, and the dot stops moving with an empty desk.</li>
+      <li>The Serial Monitor shows no <code>WARNING</code> lines.</li>
+    </ul>
+
+    <h3>Definition of done</h3>
+    <p>The hand dot works for 5 minutes with no false hands, on the real desk.</p>
+
+    <div class="note"><strong>Risk to watch:</strong> strong sunlight or a desk lamp shining on the receivers. Plan a shade or run the demo in a dim room, and note it in the team log.</div>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>

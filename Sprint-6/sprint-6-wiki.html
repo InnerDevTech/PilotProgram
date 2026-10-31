@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 6</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 6</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a class="here">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 6: Showcase and reflection</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>Present the project and reflect on what you learned.</dd>
+      <dt>Demo</dt><dd>Final demo to the class or a judge.</dd>
+      <dt>Weeks</dt><dd>Week 12</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+    </dl>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Write the presentation: problem, how it works, demo, what went wrong, what's next. Keep to 5 minutes.</td><td>Slides or notes ready</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Practise the demo script (Build Guide section 11, demo script). Time it.</td><td>Under 5 minutes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Make a one-page poster or handout with the wiring diagram and the loop diagram.</td><td>Poster printed</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Practise with a teacher or a friend. Get feedback.</td><td>Feedback written down</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Final polish and backup: copy the project folder and the calibration file to a USB drive.</td><td>Backup done</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Showcase day: demo, answer questions.</td><td>Demo delivered</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Write the reflection and update the README with "what we learned".</td><td>Reflection saved in <code>docs/sprint-reviews/S6.md</code></td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>There is no new code this sprint, so the tests are rehearsal checks plus the whole-project done definition from section 13 of the plan.</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Presentation fits the slot</td><td>Time a full run-through</td><td>Under 5 minutes</td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Demo script works end to end</td><td>Run the demo script from the Build Guide, in order</td><td>Every step works, no improvising needed</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Poster is complete</td><td>Check the printed handout</td><td>Wiring diagram and loop diagram both on one page</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Backup is usable</td><td>Copy to USB, then open the project from the USB on another machine</td><td>Project folder and calibration file both present and readable</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Every sprint checklist has passed</td><td>Walk Sprints 1 to 5 in this wiki</td><td>Each demo checklist passed at least once</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Both test suites pass</td><td><code>python -m unittest discover -s tests -v</code> and <code>node tests/test_physics.js</code></td><td>Both pass</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>Cold start on demo day</td><td>Power everything off, then set up from scratch and run</td><td>Running within the setup time you have on the day</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>Showcase delivered</td><td>Give the demo and answer questions</td><td>Demo delivered</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 6 the project should be presented, not just built. A 5-minute talk covering the problem, how it works, a live demo, what went wrong and what is next; a one-page handout with the wiring and loop diagrams; and a rehearsal in front of a teacher or friend with the feedback written down and acted on.</p>
+    <p>Everything should be backed up to a USB drive — project folder and calibration file both — before showcase day, and the Sprint 4 recording kept to hand in case the live demo misbehaves.</p>
+    <p>The project is finished when the whole-project done definition passes and the reflection is written.</p>
+
+    <h3>Project done definition</h3>
+    <ul class="check">
+      <li>Every sprint demo checklist has passed at least once.</li>
+      <li>The Sprint 5 "new person" test passed.</li>
+      <li>Both test suites pass (<code>python -m unittest discover -s tests -v</code> and <code>node tests/test_physics.js</code>).</li>
+      <li>The Build Guide, README and wiki match the code.</li>
+      <li>The showcase has been given and the reflection is saved.</li>
+    </ul>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after the showcase: how the demo went, what questions you were asked, what broke on the day.]</div>
+
+    <h3>Reflection</h3>
+    <ol>
+      <li>Which sprint took longer than planned? Why?<br><span class="fill" style="display:block;margin-top:6px">[answer]</span></li>
+      <li>What would you do differently at the start?<br><span class="fill" style="display:block;margin-top:6px">[answer]</span></li>
+      <li>Which part was the hardest to get right? How did you test it?<br><span class="fill" style="display:block;margin-top:6px">[answer]</span></li>
+      <li>What did the team learn about working together?<br><span class="fill" style="display:block;margin-top:6px">[answer]</span></li>
+      <li>What is the next feature you would build?<br><span class="fill" style="display:block;margin-top:6px">[answer]</span></li>
+    </ol>
+  </section>
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 4</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 4</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a class="here">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 4: Physics loop</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>Balls of light bounce off walls, real objects and hands, and the hand can pick them up.</dd>
+      <dt>Demo</dt><dd>A ball bounces off a mug that the student slides across the desk. A hand hovers over a ball and picks it up.</dd>
+      <dt>Weeks</dt><dd>Weeks 8 and 9</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+    </dl>
+
+    <div class="note">This sprint is a <strong>stretch goal</strong>. Only start it once the Sprint 3 demo has passed — Sprints 1 to 3 are the MVP.</div>
+
+    <h3>User stories</h3>
+    <ul>
+      <li>As a user, a ball bounces off the edges of the desk.</li>
+      <li>As a user, a real object pushes a ball when I slide it.</li>
+      <li>As a user, I can hover my hand over a ball to pick it up, or swipe to push it.</li>
+    </ul>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Run <code>node tests/test_physics.js</code>. Read <code>web/physics.js</code>. Each person explains one function.</td><td>12 tests pass, everyone can explain <code>step()</code></td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Open the desk page with no hardware: press <code>b</code> to add balls, watch them bounce off the walls.</td><td>Balls bounce off all four walls</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Connect a real object (a marker) and slide it near a ball. Check the ball moves.</td><td>Ball is pushed by the object</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Try a hand swipe and a hover. Check hover picks up the ball after about 0.6 seconds.</td><td>Swipe pushes, hover picks up</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Tune the constants at the top of <code>web/physics.js</code>: bounce, friction, hold time. Write down each change and why.</td><td>Changes logged in the team notes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Add one extra test to <code>tests/test_physics.js</code> for a case that broke during tuning.</td><td>13 or more tests pass</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Playtest with the team: 5-minute session each, write down what feels wrong.</td><td>List of 5 "feel" issues</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Fix the top issues. Check the flash effect and ball colours.</td><td>Each issue closed or moved to the backlog</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">9</td><td>Full run with the camera, IR sensor, projector and balls together. Record 3 minutes on a phone.</td><td>Recording saved</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>This is the first sprint with real automated tests of its own — <code>tests/test_physics.js</code> runs without any hardware, so run it every time you change <code>web/physics.js</code>.</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Physics unit tests pass</td><td><code>node tests/test_physics.js</code></td><td><code>All physics tests passed</code> — 12 tests, 13+ after day 6</td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Balls bounce off the walls</td><td>Open the desk page, press <code>b</code> a few times</td><td>Balls bounce off all four walls</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>A slid object pushes a ball</td><td>Slide a marked object into a moving ball</td><td>The ball is pushed away and the object flashes</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>A hand swipe pushes a ball</td><td>Swipe a hand quickly across a ball</td><td>The ball moves in the swipe direction</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>A hovering hand picks up a ball</td><td>Hold a hand still over a ball for about 0.6 s</td><td>The ball is picked up and follows the hand</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Balls stay on screen</td><td>Run with several balls for 2 minutes</td><td>No ball ever leaves the projection</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>No stuck balls</td><td>Same 2-minute run, watch the corners</td><td>No ball jitters in place or sticks to a wall</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>Full stack run</td><td>Camera, IR sensor, projector and balls together for 2 minutes</td><td>No crash, no errors in the bridge window</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Regression test from tuning</td><td>The extra test added on day 6</td><td>Passes, and still passes after later tuning</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 4 everything built so far should be working together in one loop. The projector draws balls of light; the camera supplies real object positions from Sprint 3; the IR frame supplies hand positions from Sprint 2. Balls bounce off the desk edges, off real objects as you slide them (with the object flashing on contact), and off hands.</p>
+    <p>A fast hand swipe should push a ball; a hand held still over one for about 0.6 seconds should pick it up. The constants at the top of <code>web/physics.js</code> — bounce, friction, hold time — get tuned by playtesting, with every change written down so you can explain the choices later, and any case that broke during tuning becomes a new test.</p>
+    <p>The sprint ends with a 3-minute phone recording of the whole desk running, which is also your backup if the live demo misbehaves in Sprint 6.</p>
+
+    <h3>Demo checklist</h3>
+    <ul class="check">
+      <li>Balls bounce off all walls.</li>
+      <li>A slid object pushes a ball, and the object flashes when hit.</li>
+      <li>A fast hand swipe pushes a ball.</li>
+      <li>A hovering hand picks up a ball.</li>
+      <li>The screen never shows a ball off the edge of the projection.</li>
+    </ul>
+
+    <h3>Definition of done</h3>
+    <p>A 2-minute run with no crash, no stuck balls, and no balls leaving the screen.</p>
+
+    <div class="note"><strong>Risk to watch:</strong> the browser pauses animation when the window is hidden. Keep the desk page in front and full screen during demos.</div>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>

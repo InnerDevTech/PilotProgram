@@ -1,0 +1,6 @@
+# Python leaves these behind every time the bridge or the tests run.
+__pycache__/
+*.py[cod]
+
+# The kiosk browser profile, if anyone points it at the project folder.
+jarvis-desk-kiosk/

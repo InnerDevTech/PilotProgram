@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 0</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 0</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a class="here">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 0: Setup and plan</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>All tools work, the team understands the code, and the parts are ordered.</dd>
+      <dt>Demo</dt><dd>Run the tests, then start the bridge without hardware and press keys 1 to 4 on the projector screen.</dd>
+      <dt>Weeks</dt><dd>Week 1 of 12</dd>
+      <dt>Dates</dt><dd>9 October 2026 – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">In progress</span></dd>
+    </dl>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Write the team agreement: meeting times, who does what, how to ask for help.</td><td>The agreement is written on the board</td><td class="status done">Done</td></tr>
+      <tr><td class="day">1</td><td>Read the README and the project plan. Ask questions in the board's Questions column.</td><td>Each person can say the goal in one sentence</td><td class="status done">Done</td></tr>
+      <tr><td class="day">2</td><td>Install Python 3.10+ and Arduino IDE 2 (Build Guide section 3).</td><td><code>python --version</code> works and the Arduino IDE opens</td><td class="status done">Done</td></tr>
+      <tr><td class="day">2</td><td>Run <code>python -m pip install -r requirements.txt</code> in the project folder.</td><td>No errors shown</td><td class="status done">Done</td></tr>
+      <tr><td class="day">3</td><td>Run <code>python -m unittest discover -s tests -v</code>. Fix any setup problem.</td><td>Ends with <code>OK</code> (14 tests)</td><td class="status done">Done</td></tr>
+      <tr><td class="day">3</td><td>Install Node.js and run <code>node tests/test_physics.js</code>.</td><td><code>All physics tests passed</code> (12 tests)</td><td class="status done">Done</td></tr>
+      <tr><td class="day">4</td><td>Run <code>python bridge/jarvis_bridge.py --no-serial</code> and press 1 to 4 on the page.</td><td>Screens change and the timer counts</td><td class="status done">Done</td></tr>
+      <tr><td class="day">4</td><td>Read the code tour (Build Guide section 13). Each person picks one file to explain to the team.</td><td>Each person explains their file in 2 minutes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Measure the desk and draw the projection rectangle and the IR beam positions (Build Guide section 4).</td><td>Drawing with all 16 beam positions and measurements</td><td class="status done">Done</td></tr>
+      <tr><td class="day">6</td><td>Order parts from the Build Guide list. Check the budget.</td><td>Order confirmed and parts list ticked</td><td class="status done">Done</td></tr>
+      <tr><td class="day">7</td><td>Set up the board with all sprint cards from the plan. Add a Risks column.</td><td>Board shows S1 tasks in TO DO</td><td class="status done">Done</td></tr>
+      <tr><td class="day">8</td><td>Sprint 0 review: demo, what went well, what to change. Write it down.</td><td>Review notes saved in <code>docs/sprint-reviews/S0.md</code></td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>Each test comes from a "Done when" in the table above or from the definition of done. A test is something you can run and get a clear pass or fail from — no judgement call.</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Python is installed at the right version</td><td><code>python --version</code></td><td>Prints 3.10 or higher</td><td class="status done">Pass</td></tr>
+      <tr><td>T2</td><td>Arduino IDE 2 is installed</td><td>Open the Arduino IDE and pick a board</td><td>IDE opens and a board can be selected</td><td class="status done">Pass</td></tr>
+      <tr><td>T3</td><td>Dependencies install cleanly</td><td><code>python -m pip install -r requirements.txt</code></td><td>Finishes with no errors</td><td class="status done">Pass</td></tr>
+      <tr><td>T4</td><td>Python test suite passes</td><td><code>python -m unittest discover -s tests -v</code></td><td>Ends with <code>OK</code>, 14 tests run</td><td class="status done">Pass</td></tr>
+      <tr><td>T5</td><td>Physics test suite passes</td><td><code>node tests/test_physics.js</code></td><td><code>All physics tests passed</code>, 12 tests</td><td class="status done">Pass</td></tr>
+      <tr><td>T6</td><td>Bridge starts without hardware</td><td><code>python bridge/jarvis_bridge.py --no-serial</code></td><td>Page opens, no error in the bridge window</td><td class="status done">Pass</td></tr>
+      <tr><td>T7</td><td>Keyboard moves between screens</td><td>With the page open, press 1, 2, 3, 4</td><td>Screens change and the timer counts down</td><td class="status done">Pass</td></tr>
+      <tr><td>T8</td><td>Tests pass on <em>every</em> laptop</td><td>Run T4 and T5 on each team laptop</td><td>Same result on all machines</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Parts are ordered</td><td>Check the order confirmation against the Build Guide parts list</td><td>Every line on the list is ticked</td><td class="status done">Pass</td></tr>
+      <tr><td>T10</td><td>Board is ready for Sprint 1</td><td>Look at the project board</td><td>S1 cards sit in TO DO and a Risks column exists</td><td class="status done">Pass</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 0 the project should run on every team laptop with no hardware attached. Both test suites pass — 14 Python tests and 12 physics tests — and <code>python bridge/jarvis_bridge.py --no-serial</code> opens the projector page, where keys 1 to 4 move between the Home, Timer and Stopwatch screens and the timer counts down.</p>
+    <p>Away from the keyboard, the team should be set up to work: roles assigned and written on the board, every person able to explain one file in the codebase, the desk measured with all 16 IR beam positions drawn, parts ordered against the budget, and the board loaded with Sprint 1 cards in TO DO.</p>
+    <p>Nothing physical is built this sprint. No buttons, no sensors, no camera — that starts in Sprint 1, and only if this demo passes.</p>
+
+    <h3>Definition of done</h3>
+    <ul class="check">
+      <li>Tests pass on every laptop.</li>
+      <li>The team can run the button page.</li>
+      <li>Parts are ordered.</li>
+      <li>The board is ready.</li>
+    </ul>
+
+    <div class="note"><strong>Rule for the team:</strong> if this sprint's demo does not pass, do not start Sprint 1. Fix the gap first.</div>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>

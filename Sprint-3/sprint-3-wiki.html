@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 3</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 3</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a class="here">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a href="../Sprint-5/sprint-5-wiki.html">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 3: Camera and calibration</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>The camera finds marker objects and the rings line up with the projection.</dd>
+      <dt>Demo</dt><dd>Place a labelled object on the desk. A ring appears around it in the right place, and it follows when moved.</dd>
+      <dt>Weeks</dt><dd>Weeks 6 and 7</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+    </dl>
+
+    <h3>User stories</h3>
+    <ul>
+      <li>As a user, I can name my objects in <code>objects.json</code> and see their names on the desk.</li>
+      <li>As a user, calibration checks itself and tells me if it is inaccurate.</li>
+    </ul>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Mount the camera above the desk, pointing down. Check the whole projection rectangle is in view (Build Guide section 4.3).</td><td>Camera preview shows the full rectangle</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Lock the projector focus and turn off keystone correction.</td><td>Projection edges are straight</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Run <code>python bridge/make_markers.py --count 10</code>. Print and cut 4 markers at 100% scale. Check the black square is about 4 cm.</td><td>Printed size measured</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Practise calibration with the calibration page: run <code>python bridge/calibrate.py --camera 0</code>. Fix the lighting until 24 dots are found.</td><td>24 dots found</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Check <code>calibration_check.jpg</code>. Get the average error under 2%. Re-run if not.</td><td><code>Average error</code> under 2%</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Put one marker on one object. Run <code>python bridge/jarvis_bridge.py --camera 0 --desk</code>. Check the ring appears.</td><td>Ring appears on the object</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Move the object to 5 spots. Measure how far the ring is from the object's centre at each spot.</td><td>Average offset under 2 cm</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Add 3 more objects to <code>objects.json</code>. Test an unregistered marker (amber ring).</td><td>Registered and unregistered rings show correctly</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">9</td><td>Test in the real room lighting used for the demo. Fix problems (lighting, camera focus, marker flat).</td><td>Demo checklist passes in the demo room</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>These come straight from the sprint's demo checklist, plus the two numbers the plan asks you to measure (calibration error and ring offset).</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Camera sees the whole desk</td><td>Open the camera preview</td><td>The full projection rectangle is in frame</td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Markers printed at the right size</td><td>Measure the black square on a printed marker</td><td>About 4 cm</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Calibration finds all dots</td><td><code>python bridge/calibrate.py --camera 0</code></td><td>24 dots found</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Calibration is accurate</td><td>Open <code>calibration_check.jpg</code></td><td><code>Average error</code> under 2%</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Bridge reports calibrated</td><td><code>python bridge/jarvis_bridge.py --camera 0 --desk</code></td><td>Bridge says <code>Calibrated</code></td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Registered object</td><td>Place an object listed in <code>objects.json</code> on the desk</td><td>Blue ring plus the object's name</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>Unregistered marker</td><td>Place a marker that is not in <code>objects.json</code></td><td>Amber ring, no name</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>Ring offset</td><td>Move the object to 5 spots, measure ring centre to object centre</td><td>Average offset under 2 cm</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Ring tracks movement</td><td>Slide the object around for 2 minutes</td><td>The ring stays on it the whole time</td><td>[pass/fail]</td></tr>
+      <tr><td>T10</td><td>Works in the demo room</td><td>Repeat T3, T6 and T9 in the room and lighting you will demo in</td><td>Same results as on the bench</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 3 the camera above the desk and the projector should share one coordinate system. Running <code>calibrate.py</code> finds all 24 dots and produces a mapping with under 2% average error, checked against <code>calibration_check.jpg</code> rather than taken on trust.</p>
+    <p>With that in place, a printed marker on a real object should make a ring appear around that object on the desk — blue with its name if it is listed in <code>objects.json</code>, amber if it is not — and the ring should stay on the object as it is slid around, within about 2 cm of its centre.</p>
+    <p>This is the last sprint of the MVP. If Sprints 1 to 3 pass, the project is a success even if Sprint 4 never happens.</p>
+
+    <h3>Demo checklist</h3>
+    <ul class="check">
+      <li>The calibration page shows 24 dots and the bridge says <code>Calibrated</code>.</li>
+      <li>Average calibration error is under 2%.</li>
+      <li>A registered object shows its name and a blue ring.</li>
+      <li>Moving the object moves the ring with it.</li>
+      <li>An unregistered object shows an amber ring.</li>
+    </ul>
+
+    <h3>Definition of done</h3>
+    <p>The ring stays on the object for 2 minutes of moving it around.</p>
+
+    <div class="note"><strong>Risk to watch:</strong> the projector or camera gets bumped. Mark their positions with tape, and re-run calibration after any move.</div>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>

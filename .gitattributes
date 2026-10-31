@@ -1,0 +1,6 @@
+# Keep line endings sane across machines. The wiki pages contain - and ·,
+# so they must stay UTF-8; see the note in README.md.
+* text=auto
+
+*.ino text eol=lf
+*.ps1 text eol=crlf

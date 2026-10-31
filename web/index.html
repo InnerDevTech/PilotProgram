@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Buttons and Screen</title>
+<style>
+/* ---------------------------------------------------------------- *
+ * Colours and sizes live here so nobody has to hunt through the JS. *
+ * ---------------------------------------------------------------- */
+:root {
+  --bg: #0b0d12;
+  --panel: #151925;
+  --ink: #f2f5ff;
+  --ink-dim: #9aa3bd;
+  --accent: #5ad7ff;
+  --green: #4ade80;
+  --amber: #fbbf24;
+  --red: #f87171;
+
+  /* One knob for every big number on the page. */
+  --digit-size: 22vmin;
+  --label-size: 2.2vmin;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* Digits must never jiggle as they change. */
+.digits {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* ---- page frame: top bar, middle screen, bottom legend ---- */
+#page {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1vmin;
+  padding: 2.2vmin 3vmin;
+}
+
+#topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#tabs { display: flex; gap: 1.2vmin; }
+
+.tab {
+  padding: 0.9vmin 2.2vmin;
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink-dim);
+  font-size: 2.4vmin;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #06212b;
+}
+
+#status {
+  display: flex;
+  align-items: center;
+  gap: 1.2vmin;
+  font-size: 2.2vmin;
+  color: var(--ink-dim);
+}
+
+#status-dot {
+  width: 1.8vmin;
+  height: 1.8vmin;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+#status.connected #status-dot { background: var(--green); }
+#status.waiting   #status-dot { background: var(--amber); }
+#status.offline   #status-dot { background: var(--red); }
+
+/* ---- the three screens ---- */
+#stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.screen {
+  display: none;
+  width: 100%;
+  text-align: center;
+}
+
+.screen.active { display: block; }
+
+/* Home */
+#clock-time {
+  font-size: var(--digit-size);
+  font-weight: 700;
+}
+
+#clock-time .small {
+  font-size: 0.34em;
+  color: var(--ink-dim);
+  font-weight: 600;
+}
+
+#clock-date {
+  margin-top: 1.5vmin;
+  font-size: 4vmin;
+  color: var(--ink-dim);
+}
+
+/* Timer */
+#timer-time {
+  font-size: var(--digit-size);
+  font-weight: 700;
+}
+
+#timer-bar {
+  width: 70%;
+  height: 2.4vmin;
+  margin: 3vmin auto 0;
+  background: var(--panel);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+#timer-status {
+  margin-top: 2vmin;
+  font-size: 3.6vmin;
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#timer-hint {
+  margin-top: 1.2vmin;
+  font-size: 2.6vmin;
+  color: var(--amber);
+  min-height: 3.4vmin;
+}
+
+/* The "time's up" flash. */
+.flashing { animation: flash 0.6s steps(1, end) infinite; }
+
+@keyframes flash {
+  0%   { color: var(--ink); }
+  50%  { color: var(--red); }
+  100% { color: var(--ink); }
+}
+
+/* Stopwatch */
+#watch-time {
+  font-size: var(--digit-size);
+  font-weight: 700;
+}
+
+#watch-status {
+  margin-top: 2vmin;
+  font-size: 3.6vmin;
+  color: var(--ink-dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ---- bottom legend: doubles as the how-to-use card ---- */
+#legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1vmin 2.4vmin;
+  font-size: 2.4vmin;
+  color: var(--ink-dim);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8vmin;
+  padding: 0.6vmin 1.2vmin;
+  border-radius: 1vmin;
+}
+
+.legend-item .key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 3.4vmin;
+  padding: 0.3vmin 0.8vmin;
+  border-radius: 0.8vmin;
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* Lights up for a moment so testers can see a press land. */
+.legend-item.hit { background: rgba(90, 215, 255, 0.18); }
+.legend-item.hit .key { background: var(--accent); color: #06212b; }
+
+/* ---- toast ---- */
+#toast {
+  position: absolute;
+  left: 50%;
+  bottom: 4vmin;
+  transform: translateX(-50%);
+  padding: 1.4vmin 3vmin;
+  border-radius: 1.2vmin;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 3vmin;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+#toast.show { opacity: 1; }
+
+/* ---- first-load overlay (browsers block sound until a click) ---- */
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 7, 12, 0.94);
+  font-size: 5vmin;
+  font-weight: 600;
+  text-align: center;
+  padding: 4vmin;
+  z-index: 10;
+}
+
+#overlay.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="page">
+
+  <div id="topbar">
+    <div id="tabs">
+      <div class="tab" data-tab="home">Home</div>
+      <div class="tab" data-tab="timer">Timer</div>
+      <div class="tab" data-tab="stopwatch">Stopwatch</div>
+    </div>
+    <div id="status" class="offline">
+      <span id="status-dot"></span>
+      <span id="status-text">Bridge not running</span>
+    </div>
+  </div>
+
+  <div id="stage">
+
+    <!-- Home -->
+    <div class="screen" data-screen="home">
+      <div id="clock-time" class="digits"></div>
+      <div id="clock-date"></div>
+    </div>
+
+    <!-- Timer -->
+    <div class="screen" data-screen="timer">
+      <div id="timer-time" class="digits"></div>
+      <div id="timer-bar"><div id="timer-fill"></div></div>
+      <div id="timer-status">Ready</div>
+      <div id="timer-hint"></div>
+    </div>
+
+    <!-- Stopwatch -->
+    <div class="screen" data-screen="stopwatch">
+      <div id="watch-time" class="digits"></div>
+      <div id="watch-status">Ready</div>
+    </div>
+
+    <div id="toast"></div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item" data-button="1"><span class="key">1</span> Change screen</div>
+    <div class="legend-item" data-button="2"><span class="key">2</span> Start / pause</div>
+    <div class="legend-item" data-button="3"><span class="key">3</span> Reset</div>
+    <div class="legend-item" data-button="4"><span class="key">4</span> Say the time</div>
+    <div class="legend-item" data-button="knob"><span class="key">Knob</span> Timer minutes</div>
+  </div>
+
+</div>
+
+<div id="overlay">Click anywhere to start (turns on sound)</div>
+
+<script>
+"use strict";
+
+/* ================================================================
+ * 1. STATE
+ * All timing is stored as timestamps from Date.now(), never as a
+ * count of interval ticks, so a slow or hidden tab stays accurate.
+ * ================================================================ */
+
+var SCREENS = ["home", "timer", "stopwatch"];
+
+var state = {
+  screen: "home",
+
+  timer: {
+    minutes: 5,          // what the knob has set, 1 to 60
+    mode: "ready",       // ready | running | paused | done
+    endsAt: 0,           // timestamp the countdown finishes at
+    leftMs: 5 * 60000    // what is left while ready or paused
+  },
+
+  stopwatch: {
+    mode: "ready",       // ready | running | paused
+    startedAt: 0,        // timestamp the current run began
+    beforeMs: 0          // time banked by earlier runs
+  },
+
+  soundOn: false,        // true once the overlay has been dismissed
+  flashUntil: 0,         // timestamp the "time's up" flash stops
+  hintUntil: 0,          // timestamp the knob hint stops showing
+  toastUntil: 0
+};
+
+var el = {
+  tabs: document.querySelectorAll(".tab"),
+  screens: document.querySelectorAll(".screen"),
+  status: document.getElementById("status"),
+  statusText: document.getElementById("status-text"),
+  clockTime: document.getElementById("clock-time"),
+  clockDate: document.getElementById("clock-date"),
+  timerTime: document.getElementById("timer-time"),
+  timerFill: document.getElementById("timer-fill"),
+  timerStatus: document.getElementById("timer-status"),
+  timerHint: document.getElementById("timer-hint"),
+  watchTime: document.getElementById("watch-time"),
+  watchStatus: document.getElementById("watch-status"),
+  legend: document.querySelectorAll(".legend-item"),
+  toast: document.getElementById("toast"),
+  overlay: document.getElementById("overlay")
+};
+
+/* ================================================================
+ * 2. SCREENS AND BUTTONS
+ * ================================================================ */
+
+function showScreen(name) {
+  state.screen = name;
+
+  for (var i = 0; i < el.screens.length; i++) {
+    var screen = el.screens[i];
+    screen.classList.toggle("active", screen.dataset.screen === name);
+  }
+  for (var j = 0; j < el.tabs.length; j++) {
+    var tab = el.tabs[j];
+    tab.classList.toggle("active", tab.dataset.tab === name);
+  }
+}
+
+function nextScreen() {
+  var at = SCREENS.indexOf(state.screen);
+  showScreen(SCREENS[(at + 1) % SCREENS.length]);
+}
+
+function pressButton(n) {
+  highlightKey(String(n));
+
+  if (n === 1) { nextScreen(); return; }
+  if (n === 4) { sayTheTime(); return; }
+
+  // Buttons 2 and 3 only mean something on the Timer and Stopwatch.
+  if (state.screen === "home") {
+    showToast("Press 1 to go to the Timer or Stopwatch");
+    return;
+  }
+
+  if (state.screen === "timer") {
+    if (n === 2) { startOrPauseTimer(); } else { resetTimer(); }
+  } else {
+    if (n === 2) { startOrPauseStopwatch(); } else { resetStopwatch(); }
+  }
+}
+
+/* ---- timer ---- */
+
+function startOrPauseTimer() {
+  var t = state.timer;
+
+  if (t.mode === "running") {
+    t.leftMs = Math.max(0, t.endsAt - Date.now());
+    t.mode = "paused";
+    return;
+  }
+
+  // Starting after Done begins again from the minutes the knob set.
+  if (t.mode === "done") { t.leftMs = t.minutes * 60000; }
+
+  t.endsAt = Date.now() + t.leftMs;
+  t.mode = "running";
+  state.flashUntil = 0;
+}
+
+function resetTimer() {
+  var t = state.timer;
+  t.mode = "ready";
+  t.leftMs = t.minutes * 60000;
+  t.endsAt = 0;
+  state.flashUntil = 0;
+}
+
+function setTimerMinutes(minutes) {
+  var t = state.timer;
+
+  // The knob only matters on a reset timer.
+  if (t.mode !== "ready") {
+    state.hintUntil = Date.now() + 2500;
+    return;
+  }
+
+  t.minutes = clamp(Math.round(minutes), 1, 60);
+  t.leftMs = t.minutes * 60000;
+}
+
+function nudgeTimerMinutes(step) {
+  if (state.timer.mode !== "ready") {
+    state.hintUntil = Date.now() + 2500;
+    return;
+  }
+  setTimerMinutes(state.timer.minutes + step);
+}
+
+function timerFinished() {
+  var t = state.timer;
+  t.mode = "done";
+  t.leftMs = 0;
+
+  if (state.screen !== "timer") { showScreen("timer"); }
+
+  state.flashUntil = Date.now() + 6000;
+  speak("Time's up");
+  requestBeep();
+}
+
+/* ---- stopwatch ---- */
+
+function startOrPauseStopwatch() {
+  var s = state.stopwatch;
+
+  if (s.mode === "running") {
+    s.beforeMs += Date.now() - s.startedAt;
+    s.mode = "paused";
+    return;
+  }
+
+  s.startedAt = Date.now();
+  s.mode = "running";
+}
+
+function resetStopwatch() {
+  var s = state.stopwatch;
+  s.mode = "ready";
+  s.beforeMs = 0;
+  s.startedAt = 0;
+}
+
+function stopwatchMs() {
+  var s = state.stopwatch;
+  if (s.mode === "running") { return s.beforeMs + (Date.now() - s.startedAt); }
+  return s.beforeMs;
+}
+
+/* ================================================================
+ * 3. SOUND: speech, the bridge buzzer, and a local fallback
+ * ================================================================ */
+
+function speak(text) {
+  if (!state.soundOn || !("speechSynthesis" in window)) { return; }
+  try {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  } catch (err) {
+    // Speech is a nice-to-have; never let it break the page.
+  }
+}
+
+function sayTheTime() {
+  var text = "It's " + spokenTime(new Date());
+  showToast(text);
+  speak(text);
+}
+
+// Asks the bridge to buzz the Arduino. If that fails, beep locally.
+function requestBeep() {
+  if (window.location.protocol === "file:" || !window.fetch) {
+    beepLocally();
+    return;
+  }
+
+  fetch("/beep", { method: "POST" })
+    .then(function (response) {
+      if (!response.ok) { beepLocally(); }
+    })
+    .catch(function () {
+      beepLocally();
+    });
+}
+
+// Three short beeps with the Web Audio API.
+function beepLocally() {
+  if (!state.soundOn) { return; }
+
+  var Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) { return; }
+
+  try {
+    var ctx = new Ctx();
+    for (var i = 0; i < 3; i++) {
+      var start = ctx.currentTime + i * 0.3;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.25, start);
+      gain.gain.setValueAtTime(0, start + 0.18);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.2);
+    }
+  } catch (err) {
+    // No audio device, or audio still blocked. Nothing to do.
+  }
+}
+
+/* ================================================================
+ * 4. DRAWING
+ * Every frame reads the clock and redraws from scratch.
+ * ================================================================ */
+
+var DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+var MONTHS = ["January", "February", "March", "April", "May", "June",
+              "July", "August", "September", "October", "November", "December"];
+
+function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+function clamp(n, low, high) { return Math.min(high, Math.max(low, n)); }
+
+function hour12(date) {
+  var h = date.getHours() % 12;
+  return h === 0 ? 12 : h;
+}
+
+function spokenTime(date) {
+  return hour12(date) + ":" + pad(date.getMinutes()) +
+         " " + (date.getHours() < 12 ? "AM" : "PM");
+}
+
+function drawClock(now) {
+  el.clockTime.innerHTML =
+    hour12(now) + ":" + pad(now.getMinutes()) +
+    '<span class="small">:' + pad(now.getSeconds()) + " " +
+    (now.getHours() < 12 ? "AM" : "PM") + "</span>";
+
+  el.clockDate.textContent =
+    DAYS[now.getDay()] + ", " + MONTHS[now.getMonth()] + " " + now.getDate();
+}
+
+function drawTimer(stamp) {
+  var t = state.timer;
+  var leftMs = t.mode === "running" ? Math.max(0, t.endsAt - stamp) : t.leftMs;
+
+  // Round up so the last second is shown before zero appears.
+  var totalSeconds = Math.ceil(leftMs / 1000);
+  var minutes = Math.floor(totalSeconds / 60);
+  el.timerTime.textContent = minutes + ":" + pad(totalSeconds % 60);
+
+  var wholeMs = t.minutes * 60000;
+  el.timerFill.style.width = clamp((leftMs / wholeMs) * 100, 0, 100) + "%";
+
+  el.timerStatus.textContent = {
+    ready: "Ready", running: "Running", paused: "Paused", done: "Done"
+  }[t.mode];
+
+  el.timerHint.textContent = stamp < state.hintUntil
+    ? "Press 3 to reset, then turn the knob."
+    : "";
+
+  el.timerTime.classList.toggle("flashing", stamp < state.flashUntil);
+}
+
+function drawStopwatch() {
+  var ms = stopwatchMs();
+  var totalSeconds = Math.floor(ms / 1000);
+  var hours = Math.floor(totalSeconds / 3600);
+
+  if (hours >= 1) {
+    // Past an hour, tenths stop being useful: h:mm:ss.
+    el.watchTime.textContent =
+      hours + ":" + pad(Math.floor(totalSeconds / 60) % 60) + ":" + pad(totalSeconds % 60);
+  } else {
+    el.watchTime.textContent =
+      Math.floor(totalSeconds / 60) + ":" + pad(totalSeconds % 60) +
+      "." + Math.floor((ms % 1000) / 100);
+  }
+
+  el.watchStatus.textContent = {
+    ready: "Ready", running: "Running", paused: "Paused"
+  }[state.stopwatch.mode];
+}
+
+function tick() {
+  var stamp = Date.now();
+  var now = new Date(stamp);
+
+  // The countdown is checked every frame, not only on the Timer screen.
+  if (state.timer.mode === "running" && stamp >= state.timer.endsAt) {
+    timerFinished();
+  }
+
+  drawClock(now);
+  drawTimer(stamp);
+  drawStopwatch();
+
+  if (state.toastUntil && stamp > state.toastUntil) {
+    el.toast.classList.remove("show");
+    state.toastUntil = 0;
+  }
+}
+
+function showToast(text) {
+  el.toast.textContent = text;
+  el.toast.classList.add("show");
+  state.toastUntil = Date.now() + 3000;
+}
+
+function highlightKey(name) {
+  for (var i = 0; i < el.legend.length; i++) {
+    var item = el.legend[i];
+    if (item.dataset.button !== name) { continue; }
+
+    item.classList.add("hit");
+    (function (hit) {
+      setTimeout(function () { hit.classList.remove("hit"); }, 180);
+    }(item));
+  }
+}
+
+/* ================================================================
+ * 5. BRIDGE CONNECTION
+ * GET /events is a Server-Sent Events stream; EventSource reconnects
+ * on its own, so there is no retry loop to write here.
+ * ================================================================ */
+
+function setStatus(kind, text) {
+  el.status.className = kind;
+  el.statusText.textContent = text;
+}
+
+function connectToBridge() {
+  // Opened straight off the disk: there is no bridge to talk to.
+  if (window.location.protocol === "file:" || !window.EventSource) {
+    setStatus("offline", "Bridge not running");
+    return;
+  }
+
+  var stream = new EventSource("/events");
+
+  stream.onmessage = function (event) {
+    var message;
+    try {
+      message = JSON.parse(event.data);
+    } catch (err) {
+      return;  // Ignore anything that is not JSON.
+    }
+
+    if (message.type === "status") {
+      if (message.connected) {
+        setStatus("connected", "Arduino connected");
+      } else {
+        setStatus("waiting", "Waiting for Arduino");
+      }
+    } else if (message.type === "button") {
+      pressButton(message.n);
+    } else if (message.type === "knob") {
+      highlightKey("knob");
+      setTimerMinutes(message.minutes);
+    }
+  };
+
+  stream.onerror = function () {
+    setStatus("offline", "Bridge not running");
+  };
+}
+
+/* ================================================================
+ * 6. KEYBOARD
+ * Keys 1 to 4 stand in for the buttons and the arrows for the knob,
+ * so the page can be demoed with no hardware at all.
+ * ================================================================ */
+
+document.addEventListener("keydown", function (event) {
+  dismissOverlay();
+
+  if (event.key === "1" || event.key === "2" || event.key === "3" || event.key === "4") {
+    pressButton(Number(event.key));
+  } else if (event.key === "ArrowUp") {
+    highlightKey("knob");
+    nudgeTimerMinutes(1);
+  } else if (event.key === "ArrowDown") {
+    highlightKey("knob");
+    nudgeTimerMinutes(-1);
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+});
+
+// Browsers block speech and audio until the page has been interacted with.
+function dismissOverlay() {
+  if (state.soundOn) { return; }
+  state.soundOn = true;
+  el.overlay.classList.add("hidden");
+}
+
+document.addEventListener("click", dismissOverlay);
+
+/* ================================================================
+ * 7. START
+ * ================================================================ */
+
+showScreen("home");
+resetTimer();
+tick();
+setInterval(tick, 50);
+connectToBridge();
+</script>
+</body>
+</html>

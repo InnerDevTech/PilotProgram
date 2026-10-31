@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Desk — Sprint 5</title>
+<link rel="stylesheet" href="../wiki.css">
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <h2>Sprint 5</h2>
+  <a href="#did">What I did</a>
+  <a href="#tests">Test cases</a>
+  <a href="#expected">Expected outcome</a>
+  <a href="#actual">What actually happened</a>
+
+  <h2>All sprints</h2>
+  <a href="../index.html">Wiki home</a>
+  <a href="../Sprint-0/sprint-0-wiki.html">Sprint 0 · Setup and plan</a>
+  <a href="../Sprint-1/sprint-1-wiki.html">Sprint 1 · Buttons and screen</a>
+  <a href="../Sprint-2/sprint-2-wiki.html">Sprint 2 · Hand sensor</a>
+  <a href="../Sprint-3/sprint-3-wiki.html">Sprint 3 · Camera and calibration</a>
+  <a href="../Sprint-4/sprint-4-wiki.html">Sprint 4 · Physics loop</a>
+  <a class="here">Sprint 5 · Polish and proof</a>
+  <a href="../Sprint-6/sprint-6-wiki.html">Sprint 6 · Showcase and reflection</a>
+</nav>
+
+<main>
+  <h1>Sprint 5: Polish and proof</h1>
+  <p class="sub">Jarvis Desk · FocusedAI internship</p>
+
+  <section id="did">
+    <h2>What I did</h2>
+    <dl class="infobox">
+      <dt>Goal</dt><dd>The project is stable, documented, and can be run by someone else.</dd>
+      <dt>Demo</dt><dd>A classmate follows the Build Guide to start the whole desk without help.</dd>
+      <dt>Weeks</dt><dd>Weeks 10 and 11</dd>
+      <dt>Dates</dt><dd>[start date] – [end date]</dd>
+      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+    </dl>
+
+    <div class="note"><strong>Feature freeze.</strong> No new features this sprint. Anything new goes in the backlog for after the showcase.</div>
+
+    <p>[Optional notes: anything changed from the plan and why.]</p>
+
+    <table>
+      <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
+      <tr><td class="day">1</td><td>Freeze new features. Make a list of known bugs and rank them.</td><td>Bug list ranked</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Fix the top 3 bugs. Add a test for each one where possible.</td><td>Tests pass</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Check the Build Guide step by step on a clean folder. Note every step that is wrong or unclear.</td><td>Guide corrections list</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Update the Build Guide, README and wiki (<code>docs/build-wiki.js</code>, then <code>node docs/build-wiki.js</code>).</td><td>Docs match the code</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Check the safety section: low voltage, IR warning, privacy. Add anything missing.</td><td>Safety section signed off</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Clean the wiring. Label every wire at both ends. Tidy the cables.</td><td>Labels on every wire</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Run the full demo 3 times. Count the failures.</td><td>3 runs, failures logged</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Fix what broke in the 3 runs.</td><td>Each failure fixed or noted</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">9</td><td>Second test by a classmate who follows only the docs.</td><td>Classmate starts the desk alone</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review. Decide what goes in the showcase.</td><td>Showcase outline agreed</td><td class="status todo">To do</td></tr>
+    </table>
+  </section>
+
+  <section id="tests">
+    <h2>Test cases</h2>
+    <p>This sprint tests the <em>documentation</em> as much as the code. The hardest test to pass is T5 — a person who did not build it getting it running from the docs alone.</p>
+    <table>
+      <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
+      <tr><td>T1</td><td>Python test suite passes</td><td><code>python -m unittest discover -s tests -v</code></td><td>Ends with <code>OK</code></td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Physics test suite passes</td><td><code>node tests/test_physics.js</code></td><td><code>All physics tests passed</code></td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Build Guide works on a clean folder</td><td>Follow the guide start to finish in a fresh copy</td><td>Every step works exactly as written</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Docs match the code</td><td>Re-read Build Guide, README and wiki against the current code</td><td>No command, filename or pin number is out of date</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>New person starts the desk</td><td>A classmate uses only the docs, with no help from the team</td><td>They get the full desk running</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Three full runs</td><td>Run the whole demo 3 times in a row</td><td>No crash in any of the 3</td><td>[pass/fail]</td></tr>
+      <tr><td>T7</td><td>Every wire is labelled</td><td>Inspect the wiring</td><td>Every wire labelled at both ends</td><td>[pass/fail]</td></tr>
+      <tr><td>T8</td><td>Safety section complete</td><td>Read the safety section: low voltage, IR warning, privacy</td><td>All three covered and signed off</td><td>[pass/fail]</td></tr>
+      <tr><td>T9</td><td>Top 3 bugs stay fixed</td><td>Re-run the tests added for each fixed bug</td><td>All pass</td><td>[pass/fail]</td></tr>
+    </table>
+  </section>
+
+  <section id="expected">
+    <h2>Expected outcome</h2>
+    <p>By the end of Sprint 5 nothing new should have been added — the sprint is about making what exists trustworthy. The top three bugs are fixed, each with a test so they cannot come back silently, and both test suites pass.</p>
+    <p>The Build Guide should have been walked step by step on a clean folder and corrected wherever it was wrong or unclear, with the README and wiki brought in line with the code. The wiring should be tidy and labelled at both ends of every wire, and the safety section should cover low voltage, the IR warning and privacy.</p>
+    <p>The real proof is a classmate who did not build the desk starting it from the docs alone, and the full demo running three times in a row without a crash. If someone else can run it, it is finished; if only you can run it, it is not.</p>
+
+    <h3>Demo checklist</h3>
+    <ul class="check">
+      <li>A new person can build and start the desk using only the docs.</li>
+      <li>All automated tests pass (<code>python -m unittest discover -s tests -v</code> and <code>node tests/test_physics.js</code>).</li>
+      <li>The full demo runs 3 times in a row without a crash.</li>
+      <li>Every wire is labelled.</li>
+    </ul>
+
+    <h3>Definition of done</h3>
+    <p>The docs have been tested by someone who did not write them.</p>
+  </section>
+
+  <section id="actual">
+    <h2>What actually happened</h2>
+    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected. Include what the classmate got stuck on — that is the most useful thing this sprint produces.]</div>
+  </section>
+</main>
+</div>
+</body>
+</html>
