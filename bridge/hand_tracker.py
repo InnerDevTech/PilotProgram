@@ -226,7 +226,10 @@ class HandTracker:
             self.broadcaster.send(self.status_event())
 
     def _loop(self, capture, landmarker, width, height):
-        started = time.monotonic()
+        # perf_counter has sub-millisecond resolution; on Windows monotonic()
+        # only ticks every ~15 ms, so two quick frames could share a stamp.
+        started = time.perf_counter()
+        last_stamp = -1
 
         while not self._stop.is_set():
             ok, frame = capture.read()
@@ -238,8 +241,13 @@ class HandTracker:
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-            # VIDEO mode needs a timestamp that only ever goes up.
-            stamp_ms = int((time.monotonic() - started) * 1000)
+            # VIDEO mode needs a timestamp that strictly goes up. Buffered
+            # frames can arrive within the same millisecond, so never reuse
+            # or go below the previous stamp.
+            stamp_ms = int((time.perf_counter() - started) * 1000)
+            if stamp_ms <= last_stamp:
+                stamp_ms = last_stamp + 1
+            last_stamp = stamp_ms
             result = landmarker.detect_for_video(image, stamp_ms)
 
             point = None
