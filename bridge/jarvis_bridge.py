@@ -20,9 +20,17 @@ full screen on it - see bridge/projector.py, and --no-cast to skip that.
 
 The page is at http://localhost:8000. Ctrl+C stops the bridge.
 
-Sprints 2 and 3 add a second Arduino (the hand sensor) and a camera. Those get
-their own SerialLink-style class and their own thread; they feed the same
-Broadcaster, so nothing in this file has to be rewritten for them.
+Sprint 2 adds the hand sensor. It is not a second Arduino in the end - it is
+the webcam plus MediaPipe, in bridge/hand_tracker.py. It is built to the same
+shape as SerialLink below (start, stop, status_event) and feeds the same
+Broadcaster, so the only thing this file does for it is switch it on:
+
+    python bridge/jarvis_bridge.py --desk         # buttons AND the hand dot (C270)
+
+Calibrate once before that, or the tracker has no way to know which part of
+the camera picture is the desk:
+
+    python bridge/calibrate_desk.py
 """
 
 import argparse
@@ -414,10 +422,32 @@ def build_parser():
                              "when the projector is not picked automatically")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="print every line received from the Arduino")
-    # Reserved for later sprints.
-    parser.add_argument("--desk", action="store_true", help="hand sensor (Sprint 2)")
-    parser.add_argument("--camera", type=int, help="camera number (Sprint 3)")
+    parser.add_argument("--camera", metavar="NAME_OR_N",
+                        help="webcam for the hand sensor (Sprint 2): a name "
+                             "such as C270, or a number")
+    parser.add_argument("--desk", action="store_true",
+                        help="turn on the hand sensor with the C270 webcam")
+    parser.add_argument("--smoothing", type=float, default=0.35, metavar="W",
+                        help="hand dot steadiness: 0.05 very smooth, 1.0 none "
+                             "(default 0.35)")
     return parser
+
+
+def load_hand_tracker():
+    """Import bridge/hand_tracker.py, but only when --camera asks for it.
+
+    It drags in OpenCV and MediaPipe, which together take a few seconds to
+    import. Doing that at the top of this file would slow down every plain
+    "python bridge/jarvis_bridge.py" for a feature it is not using.
+    """
+    try:
+        from bridge import hand_tracker
+    except ImportError:
+        try:
+            import hand_tracker
+        except ImportError:
+            return None
+    return hand_tracker
 
 
 def print_ports():
@@ -427,9 +457,6 @@ def print_ports():
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-
-    if args.desk or args.camera is not None:
-        print("Not built yet (Sprint 2/3)")
 
     # pyserial is only needed when we actually touch the hardware, so
     # --no-serial still works without it (that is the Sprint 0 demo).
@@ -476,6 +503,21 @@ def main(argv=None):
         link = SerialLink(broadcaster, preferred_port=args.port, verbose=args.verbose)
         link.start()
 
+    # The hand sensor (Sprint 2). It starts its own thread and reports its own
+    # problems, so a camera that will not open never stops the page serving.
+    hands = None
+    camera_index = "C270" if args.desk and args.camera is None else args.camera
+    if camera_index is not None:
+        tracker_module = load_hand_tracker()
+        if tracker_module is None:
+            print("The hand sensor needs OpenCV and MediaPipe. "
+                  "Run: python -m pip install -r requirements.txt")
+        else:
+            hands = tracker_module.HandTracker(
+                broadcaster, camera_index=camera_index,
+                smoothing=args.smoothing, verbose=args.verbose)
+            hands.start()
+
     try:
         server = make_server(args.http_port, broadcaster, link)
     except OSError:
@@ -507,6 +549,8 @@ def main(argv=None):
     finally:
         if link is not None:
             link.stop()
+        if hands is not None:
+            hands.stop()
         projector.close_fullscreen()
         server.server_close()
         print("Stopped.")

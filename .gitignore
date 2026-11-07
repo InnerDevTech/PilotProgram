@@ -4,3 +4,12 @@ __pycache__/
 
 # The kiosk browser profile, if anyone points it at the project folder.
 jarvis-desk-kiosk/
+
+# MediaPipe's hand model: 7.8 MB, and it is a download, not source. Fetch it
+# with "python bridge/hand_tracker.py --where-is-the-model".
+bridge/models/
+
+# Where the camera sees the projection. It is true for ONE camera in ONE
+# position, so it belongs to the desk it was measured on, not to the repo.
+# Run "python bridge/calibrate_desk.py" on yours.
+calibration.json

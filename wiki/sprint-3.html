@@ -33,73 +33,83 @@
   <section id="did">
     <h2>What I did</h2>
     <dl class="infobox">
-      <dt>Goal</dt><dd>The camera finds marker objects and the rings line up with the projection.</dd>
+      <dt>Goal</dt><dd>The camera is mounted for good, it finds marker objects, and rings line up with them on the projection.</dd>
       <dt>Demo</dt><dd>Place a labelled object on the desk. A ring appears around it in the right place, and it follows when moved.</dd>
       <dt>Weeks</dt><dd>Weeks 6 and 7</dd>
       <dt>Dates</dt><dd>[start date] – [end date]</dd>
       <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
     </dl>
 
+    <div class="note"><strong>Changed from the plan.</strong> Sprint 2 switched the hand sensor from IR beams to the webcam, and a camera needs calibrating before it can place anything. So the calibration this sprint was going to build &mdash; turning camera pixels into desk positions, saving <code>calibration.json</code>, the bridge&rsquo;s <code>--camera</code> option &mdash; was built in Sprint 2 instead (<code>bridge/calibrate_desk.py</code> and <code>bridge/desk_geometry.py</code>). The plan&rsquo;s 24-dot <code>calibrate.py</code> is not needed. What is left of calibration here is <em>proving</em> it is accurate. That frees up this sprint for the objects, and for mounting the camera properly.</div>
+
     <h3>User stories</h3>
     <ul>
       <li>As a user, I can name my objects in <code>objects.json</code> and see their names on the desk.</li>
       <li>As a user, calibration checks itself and tells me if it is inaccurate.</li>
+      <li>As a user, my hand and my objects are tracked at the same time by the one camera.</li>
     </ul>
 
-    <p>[Optional notes: anything changed from the plan and why.]</p>
+    <h3>Already done in Sprint 2</h3>
+    <ul>
+      <li>Camera pixels to desk coordinates (the homography), saved in <code>calibration.json</code>.</li>
+      <li>Four-corner calibration tool with a grid drawn back over the camera picture.</li>
+      <li>Bridge option to turn the camera on (<code>--desk</code>, or <code>--camera</code> with a name or number).</li>
+      <li>A page layer over the screens that can draw on the desk (the hand dot uses it; the rings will too).</li>
+    </ul>
 
     <table>
       <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
-      <tr><td class="day">1</td><td>Mount the camera above the desk, pointing down. Check the whole projection rectangle is in view (Build Guide section 4.3).</td><td>Camera preview shows the full rectangle</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">2</td><td>Lock the projector focus and turn off keystone correction.</td><td>Projection edges are straight</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">3</td><td>Run <code>python bridge/make_markers.py --count 10</code>. Print and cut 4 markers at 100% scale. Check the black square is about 4 cm.</td><td>Printed size measured</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">4</td><td>Practise calibration with the calibration page: run <code>python bridge/calibrate.py --camera 0</code>. Fix the lighting until 24 dots are found.</td><td>24 dots found</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">5</td><td>Check <code>calibration_check.jpg</code>. Get the average error under 2%. Re-run if not.</td><td><code>Average error</code> under 2%</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">6</td><td>Put one marker on one object. Run <code>python bridge/jarvis_bridge.py --camera 0 --desk</code>. Check the ring appears.</td><td>Ring appears on the object</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">7</td><td>Move the object to 5 spots. Measure how far the ring is from the object's centre at each spot.</td><td>Average offset under 2 cm</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">8</td><td>Add 3 more objects to <code>objects.json</code>. Test an unregistered marker (amber ring).</td><td>Registered and unregistered rings show correctly</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">1</td><td>Mount the camera above the desk for good, pointing straight down (3D-printed wall mount). Check the whole projection rectangle is in view and an arm does not shadow it.</td><td>Camera preview shows the full rectangle; camera does not move when the desk is bumped</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">2</td><td>Lock the projector focus and turn off keystone correction. Mark both positions with tape. Re-run <code>python bridge/calibrate_desk.py</code> for the new camera position.</td><td>Projection edges are straight, new <code>calibration.json</code> saved, hand dot still follows</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">3</td><td>Write <code>bridge/make_markers.py</code>: it makes printable ArUco markers (OpenCV has them built in). Print 4 at 100% scale.</td><td>Black square measures about 4 cm</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">4</td><td>Write the marker finder (<code>bridge/object_tracker.py</code>): find markers in each camera frame and turn their centres into desk coordinates with the existing calibration. Add a <code>--preview</code> like the hand tracker&rsquo;s.</td><td>Preview draws a box and an ID on each marker</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Share the camera: one loop reads each frame and gives it to both the hand finder and the marker finder (the camera can only be opened once). Run <code>python bridge/jarvis_bridge.py --desk</code>.</td><td>Hand dot and marker positions both arrive at the page</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">6</td><td>Create <code>objects.json</code> (marker ID to name). Draw the rings on the page: blue with the name for a registered marker, amber for an unknown one.</td><td>Ring appears on the object with its name</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">7</td><td>Add the calibration check: the page shows target crosses at known desk positions, you put a marker on each, and the bridge reports the average error.</td><td>Average error under 2% of the desk width</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">8</td><td>Move the object to 5 spots and measure ring centre to object centre. Add 3 more objects to <code>objects.json</code>. Check a hand passing over a marker does not make its ring flicker away.</td><td>Average offset under 2 cm; rings ride out a hand passing over</td><td class="status todo">To do</td></tr>
       <tr><td class="day">9</td><td>Test in the real room lighting used for the demo. Fix problems (lighting, camera focus, marker flat).</td><td>Demo checklist passes in the demo room</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo. Write <code>docs/sprint-reviews/S3.md</code>.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
     </table>
   </section>
 
   <section id="tests">
     <h2>Test cases</h2>
-    <p>These come straight from the sprint's demo checklist, plus the two numbers the plan asks you to measure (calibration error and ring offset).</p>
+    <p>These come from the sprint&rsquo;s demo checklist, plus the two numbers the plan asks you to measure (calibration error and ring offset). As in Sprint 2, keep the marker maths out of the camera loop so T1 runs with nothing plugged in.</p>
     <table>
       <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
-      <tr><td>T1</td><td>Camera sees the whole desk</td><td>Open the camera preview</td><td>The full projection rectangle is in frame</td><td>[pass/fail]</td></tr>
-      <tr><td>T2</td><td>Markers printed at the right size</td><td>Measure the black square on a printed marker</td><td>About 4 cm</td><td>[pass/fail]</td></tr>
-      <tr><td>T3</td><td>Calibration finds all dots</td><td><code>python bridge/calibrate.py --camera 0</code></td><td>24 dots found</td><td>[pass/fail]</td></tr>
-      <tr><td>T4</td><td>Calibration is accurate</td><td>Open <code>calibration_check.jpg</code></td><td><code>Average error</code> under 2%</td><td>[pass/fail]</td></tr>
-      <tr><td>T5</td><td>Bridge reports calibrated</td><td><code>python bridge/jarvis_bridge.py --camera 0 --desk</code></td><td>Bridge says <code>Calibrated</code></td><td>[pass/fail]</td></tr>
-      <tr><td>T6</td><td>Registered object</td><td>Place an object listed in <code>objects.json</code> on the desk</td><td>Blue ring plus the object's name</td><td>[pass/fail]</td></tr>
+      <tr><td>T1</td><td>Automated tests</td><td><code>python -m pytest tests</code></td><td>All pass, including new tests for marker positions and <code>objects.json</code></td><td>[pass/fail]</td></tr>
+      <tr><td>T2</td><td>Camera sees the whole desk from its mount</td><td><code>python bridge/hand_tracker.py --preview</code></td><td>The full projection rectangle is in frame</td><td>[pass/fail]</td></tr>
+      <tr><td>T3</td><td>Markers printed at the right size</td><td>Measure the black square on a printed marker</td><td>About 4 cm</td><td>[pass/fail]</td></tr>
+      <tr><td>T4</td><td>Calibration is accurate</td><td>Run the calibration check (day 7)</td><td>Average error under 2%</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Hand and objects together</td><td><code>python bridge/jarvis_bridge.py --desk</code></td><td>Hand dot and rings both work at once</td><td>[pass/fail]</td></tr>
+      <tr><td>T6</td><td>Registered object</td><td>Place an object listed in <code>objects.json</code> on the desk</td><td>Blue ring plus the object&rsquo;s name</td><td>[pass/fail]</td></tr>
       <tr><td>T7</td><td>Unregistered marker</td><td>Place a marker that is not in <code>objects.json</code></td><td>Amber ring, no name</td><td>[pass/fail]</td></tr>
       <tr><td>T8</td><td>Ring offset</td><td>Move the object to 5 spots, measure ring centre to object centre</td><td>Average offset under 2 cm</td><td>[pass/fail]</td></tr>
       <tr><td>T9</td><td>Ring tracks movement</td><td>Slide the object around for 2 minutes</td><td>The ring stays on it the whole time</td><td>[pass/fail]</td></tr>
-      <tr><td>T10</td><td>Works in the demo room</td><td>Repeat T3, T6 and T9 in the room and lighting you will demo in</td><td>Same results as on the bench</td><td>[pass/fail]</td></tr>
+      <tr><td>T10</td><td>Works in the demo room</td><td>Repeat T4, T6 and T9 in the room and lighting you will demo in</td><td>Same results as on the bench</td><td>[pass/fail]</td></tr>
     </table>
   </section>
 
   <section id="expected">
     <h2>Expected outcome</h2>
-    <p>By the end of Sprint 3 the camera above the desk and the projector should share one coordinate system. Running <code>calibrate.py</code> finds all 24 dots and produces a mapping with under 2% average error, checked against <code>calibration_check.jpg</code> rather than taken on trust.</p>
-    <p>With that in place, a printed marker on a real object should make a ring appear around that object on the desk — blue with its name if it is listed in <code>objects.json</code>, amber if it is not — and the ring should stay on the object as it is slid around, within about 2 cm of its centre.</p>
+    <p>By the end of Sprint 3 the camera is fixed above the desk looking straight down, and the calibration from Sprint 2 has been re-done for that position and measured at under 2% error &mdash; checked, not taken on trust.</p>
+    <p>A printed marker on a real object makes a ring appear around it on the desk: blue with its name if it is listed in <code>objects.json</code>, amber if it is not. The ring stays on the object as it is slid around, within about 2 cm of its centre, and the hand dot keeps working at the same time from the same camera.</p>
     <p>This is the last sprint of the MVP. If Sprints 1 to 3 pass, the project is a success even if Sprint 4 never happens.</p>
 
     <h3>Demo checklist</h3>
     <ul class="check">
-      <li>The calibration page shows 24 dots and the bridge says <code>Calibrated</code>.</li>
+      <li>The camera is on its permanent mount and the bridge reports the hand sensor connected.</li>
       <li>Average calibration error is under 2%.</li>
       <li>A registered object shows its name and a blue ring.</li>
       <li>Moving the object moves the ring with it.</li>
       <li>An unregistered object shows an amber ring.</li>
+      <li>The hand dot still works with objects on the desk.</li>
     </ul>
 
     <h3>Definition of done</h3>
     <p>The ring stays on the object for 2 minutes of moving it around.</p>
 
-    <div class="note"><strong>Risk to watch:</strong> the projector or camera gets bumped. Mark their positions with tape, and re-run calibration after any move.</div>
+    <div class="note"><strong>Risk to watch:</strong> the projector or camera gets bumped. Mark their positions with tape, and re-run <code>calibrate_desk.py</code> after any move. Second risk: a hand over a marker hides it from the camera &mdash; the ring should hold for a moment instead of vanishing, the same way the hand dot rides out a dropped frame.</div>
   </section>
 
   <section id="actual">

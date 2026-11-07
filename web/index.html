@@ -94,6 +94,30 @@ html, body {
 #status.waiting   #status-dot { background: var(--amber); }
 #status.offline   #status-dot { background: var(--red); }
 
+/* The hand sensor gets its own light, beside the Arduino's. It stays
+ * hidden until the bridge says the sensor exists, so the Sprint 1 page
+ * looks exactly as it did. */
+#hand-status { display: none; }
+
+#hand-status.on {
+  display: flex;
+  align-items: center;
+  gap: 1.2vmin;
+  margin-left: 2vmin;
+  padding-left: 2vmin;
+  border-left: 1px solid rgba(154, 163, 189, 0.3);
+}
+
+#hand-status.connected #hand-dot { background: var(--green); }
+#hand-status.offline   #hand-dot { background: var(--red); }
+
+#hand-dot {
+  width: 1.8vmin;
+  height: 1.8vmin;
+  border-radius: 50%;
+  background: var(--red);
+}
+
 /* ---- the three screens ---- */
 #stage {
   position: relative;
@@ -238,6 +262,25 @@ html, body {
 
 #toast.show { opacity: 1; }
 
+/* ---- the desk layer (Sprint 2) ----
+ * One canvas over the whole page. For now the only thing it draws is the
+ * hand dot; Sprint 3's object rings and Sprint 4's balls will join it here
+ * rather than getting layers of their own. It never takes clicks.
+ */
+#desk {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* With a hand over the desk, the big digits step back so the dot stays
+ * easy to see on top of them. The toast is left alone on purpose. */
+.screen { transition: opacity 0.25s; }
+#page.hand-present .screen { opacity: 0.32; }
+
 /* ---- first-load overlay (browsers block sound until a click) ---- */
 #overlay {
   position: fixed;
@@ -268,6 +311,10 @@ html, body {
     <div id="status" class="offline">
       <span id="status-dot"></span>
       <span id="status-text">Bridge not running</span>
+      <span id="hand-status" class="offline">
+        <span id="hand-dot"></span>
+        <span id="hand-text">Hand sensor: off</span>
+      </span>
     </div>
   </div>
 
@@ -306,6 +353,8 @@ html, body {
 
 </div>
 
+<canvas id="desk"></canvas>
+
 <div id="overlay">Click anywhere to start (turns on sound)</div>
 
 <script>
@@ -338,7 +387,12 @@ var state = {
   soundOn: false,        // true once the overlay has been dismissed
   flashUntil: 0,         // timestamp the "time's up" flash stops
   hintUntil: 0,          // timestamp the knob hint stops showing
-  toastUntil: 0
+  toastUntil: 0,
+
+  /* Sprint 2. hand is {x, y} in desk coordinates - 0 to 1 across the
+   * projection, (0,0) top left - or null when the desk is clear. */
+  hand: null,
+  demoHand: false        // h key: the mouse stands in for the camera
 };
 
 var el = {
@@ -356,7 +410,11 @@ var el = {
   watchStatus: document.getElementById("watch-status"),
   legend: document.querySelectorAll(".legend-item"),
   toast: document.getElementById("toast"),
-  overlay: document.getElementById("overlay")
+  overlay: document.getElementById("overlay"),
+  page: document.getElementById("page"),
+  desk: document.getElementById("desk"),
+  handStatus: document.getElementById("hand-status"),
+  handText: document.getElementById("hand-text")
 };
 
 /* ================================================================
@@ -640,6 +698,7 @@ function tick() {
   drawClock(now);
   drawTimer(stamp);
   drawStopwatch();
+  deskCatchUp(stamp);
 
   if (state.toastUntil && stamp > state.toastUntil) {
     el.toast.classList.remove("show");
@@ -666,7 +725,116 @@ function highlightKey(name) {
 }
 
 /* ================================================================
- * 5. BRIDGE CONNECTION
+ * 5. THE DESK LAYER (Sprint 2)
+ *
+ * One canvas drawn over the three screens. It is not a fourth screen -
+ * button 1 never switches it off, and the clock keeps running behind it.
+ *
+ * COORDINATES. A position on the desk is two numbers from 0 to 1 across
+ * the projection rectangle, (0,0) at the top left. The camera and the
+ * homography in bridge/desk_geometry.py produce exactly these, so a hand
+ * at (0.5, 0.5) puts the dot in the middle of the page. Nothing here ever
+ * works in camera pixels.
+ *
+ * WHAT THE BRIDGE SENDS:
+ *   {"type": "hand", "x": 0.42, "y": 0.61}      hand at that spot
+ *   {"type": "hand", "present": false}           desk is clear
+ *   {"type": "hand_status", "connected": true, "detail": "camera 0 ..."}
+ * ================================================================ */
+
+var HAND_RGB = "90, 215, 255";   // --accent, as RGB so it can fade out
+
+var deskCtx = el.desk.getContext("2d");
+var deskSize = { w: 0, h: 0, scale: 0 };
+
+// The canvas needs real device pixels, or the dot looks soft on the
+// projector. Called at startup and on every resize.
+function resizeDesk() {
+  var ratio = window.devicePixelRatio || 1;
+
+  deskSize.w = el.desk.clientWidth;
+  deskSize.h = el.desk.clientHeight;
+  deskSize.scale = Math.min(deskSize.w, deskSize.h);
+
+  el.desk.width = Math.round(deskSize.w * ratio);
+  el.desk.height = Math.round(deskSize.h * ratio);
+  deskCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+}
+
+// Lengths are a fraction of the SHORTER side, so the dot stays round
+// whatever shape the projection is.
+function deskLen(v) { return v * deskSize.scale; }
+
+function drawHand(hand) {
+  var x = hand.x * deskSize.w;
+  var y = hand.y * deskSize.h;
+  var radius = deskLen(0.05);
+
+  var glow = deskCtx.createRadialGradient(x, y, 0, x, y, radius);
+  glow.addColorStop(0, "rgba(" + HAND_RGB + ", 0.95)");
+  glow.addColorStop(0.4, "rgba(" + HAND_RGB + ", 0.45)");
+  glow.addColorStop(1, "rgba(" + HAND_RGB + ", 0)");
+
+  deskCtx.fillStyle = glow;
+  deskCtx.beginPath();
+  deskCtx.arc(x, y, radius, 0, Math.PI * 2);
+  deskCtx.fill();
+
+  // A hard centre, so the dot has a point you can measure to when you
+  // check the position error in Sprint 2's test T7.
+  deskCtx.fillStyle = "rgba(" + HAND_RGB + ", 1)";
+  deskCtx.beginPath();
+  deskCtx.arc(x, y, deskLen(0.009), 0, Math.PI * 2);
+  deskCtx.fill();
+}
+
+function drawDeskLayer() {
+  // The page can load before the window has a size - the bridge opens it
+  // full screen while the cast to the projector is still being set up, so
+  // the first measurement can honestly be 0x0. Catch up when a size turns
+  // up, or the canvas would stay blank for good.
+  if (deskSize.w !== el.desk.clientWidth || deskSize.h !== el.desk.clientHeight) {
+    resizeDesk();
+  }
+
+  deskCtx.clearRect(0, 0, deskSize.w, deskSize.h);
+
+  if (state.hand) { drawHand(state.hand); }
+
+  el.page.classList.toggle("hand-present", !!state.hand);
+}
+
+// The desk layer gets its own requestAnimationFrame loop, so the dot
+// moves as smoothly as the camera allows. The clock keeps its own
+// timestamp-driven tick, so a slow frame rate can never make it drift.
+var lastDeskFrame = 0;
+
+function deskFrame() {
+  lastDeskFrame = Date.now();
+  drawDeskLayer();
+  window.requestAnimationFrame(deskFrame);
+}
+
+// Browsers throttle requestAnimationFrame behind another window, which
+// would leave a stale dot frozen on the desk. tick() runs on a plain
+// interval and catches that. It only fires when frames have stopped.
+function deskCatchUp(stamp) {
+  if (stamp - lastDeskFrame > 200) { drawDeskLayer(); }
+}
+
+function setHand(x, y) {
+  state.hand = { x: clamp(x, 0, 1), y: clamp(y, 0, 1) };
+}
+
+function clearHand() { state.hand = null; }
+
+function setHandStatus(on, connected, text) {
+  el.handStatus.className = (on ? "on " : "") + (connected ? "connected" : "offline");
+  el.handText.textContent = text;
+}
+
+/* ================================================================
+ * 6. BRIDGE CONNECTION
  * GET /events is a Server-Sent Events stream; EventSource reconnects
  * on its own, so there is no retry loop to write here.
  * ================================================================ */
@@ -704,19 +872,45 @@ function connectToBridge() {
     } else if (message.type === "knob") {
       highlightKey("knob");
       setTimerMinutes(message.minutes);
+    } else if (message.type === "hand") {
+      // Sprint 2. present: false, or no x at all, means a clear desk.
+      if (message.present === false || typeof message.x !== "number") {
+        clearHand();
+      } else {
+        setHand(message.x, message.y);
+      }
+    } else if (message.type === "hand_status") {
+      setHandStatus(true, message.connected,
+                    message.connected ? "Hand sensor: connected"
+                                      : "Hand sensor: " + (message.detail || "off"));
+      if (!message.connected) { clearHand(); }
     }
   };
 
   stream.onerror = function () {
     setStatus("offline", "Bridge not running");
+
+    // Drop the hand rather than leave a stale dot sitting on the desk
+    // while the bridge is gone.
+    clearHand();
   };
 }
 
 /* ================================================================
- * 6. KEYBOARD
+ * 7. KEYBOARD
  * Keys 1 to 4 stand in for the buttons and the arrows for the knob,
  * so the page can be demoed with no hardware at all.
  * ================================================================ */
+
+// Where the mouse is, in desk coordinates. Only the demo hand uses it.
+var mouseAt = { x: 0.5, y: 0.5 };
+
+document.addEventListener("mousemove", function (event) {
+  mouseAt.x = deskSize.w ? event.clientX / deskSize.w : 0.5;
+  mouseAt.y = deskSize.h ? event.clientY / deskSize.h : 0.5;
+
+  if (state.demoHand) { setHand(mouseAt.x, mouseAt.y); }
+});
 
 document.addEventListener("keydown", function (event) {
   dismissOverlay();
@@ -729,6 +923,17 @@ document.addEventListener("keydown", function (event) {
   } else if (event.key === "ArrowDown") {
     highlightKey("knob");
     nudgeTimerMinutes(-1);
+  } else if (event.key === "h" || event.key === "H") {
+    // Demo stand-in for the camera: the mouse plays the part of a hand,
+    // so the dot can be checked with nothing plugged in at all.
+    state.demoHand = !state.demoHand;
+    if (state.demoHand) {
+      setHand(mouseAt.x, mouseAt.y);
+      showToast("Demo hand on - move the mouse");
+    } else {
+      clearHand();
+      showToast("Demo hand off");
+    }
   } else {
     return;
   }
@@ -746,13 +951,18 @@ function dismissOverlay() {
 document.addEventListener("click", dismissOverlay);
 
 /* ================================================================
- * 7. START
+ * 8. START
  * ================================================================ */
 
 showScreen("home");
 resetTimer();
 tick();
 setInterval(tick, 50);
+
+resizeDesk();
+window.addEventListener("resize", resizeDesk);
+deskFrame();
+
 connectToBridge();
 </script>
 </body>

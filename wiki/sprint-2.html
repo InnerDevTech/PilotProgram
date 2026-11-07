@@ -33,77 +33,103 @@
   <section id="did">
     <h2>What I did</h2>
     <dl class="infobox">
-      <dt>Goal</dt><dd>16 IR beams report where a hand is, and a dot follows it on the desk page.</dd>
-      <dt>Demo</dt><dd>Move a hand across the frame. The glowing dot follows and the Serial Monitor shows the matching beam pattern.</dd>
+      <dt>Goal</dt><dd>The webcam finds a hand on the desk, and a dot follows it on the projection.</dd>
+      <dt>Demo</dt><dd>Move a hand over the desk. The glowing dot follows it, and the page shows "Hand sensor: connected".</dd>
       <dt>Weeks</dt><dd>Weeks 4 and 5</dd>
-      <dt>Dates</dt><dd>[start date] – [end date]</dd>
-      <dt>Status</dt><dd><span class="status todo">Not started</span></dd>
+      <dt>Dates</dt><dd>[start date] &ndash; 6 November 2026</dd>
+      <dt>Status</dt><dd><span class="status done">Done</span></dd>
     </dl>
+
+    <div class="note"><strong>Changed from the plan.</strong> This sprint was going to be
+    16 infrared beams in a frame around the desk, read by an Arduino Mega. It is now the
+    webcam plus Google&rsquo;s MediaPipe, in software. Why: no IR parts to order or solder,
+    nothing to knock out of alignment, no sunlight problem, and a position accurate to
+    centimetres instead of to one 6&nbsp;cm beam spacing. The cost is that the desk now
+    needs <em>calibrating</em> &mdash; the beams were the coordinate system, and a camera is
+    not &mdash; so the four-corner calibration that was going to be part of Sprint 3 has
+    moved into this sprint.</div>
 
     <h3>User stories</h3>
     <ul>
       <li>As a user, my hand over the desk shows a glowing dot on the projection.</li>
-      <li>As a user, the sensor ignores room light changes after I press C to recalibrate.</li>
+      <li>As a user, I calibrate once by clicking the four corners of the projection, and it stays calibrated until something gets bumped.</li>
+      <li>As a user, a hand held beside the desk does not put a dot on the projection.</li>
     </ul>
 
-    <p>[Optional notes: anything changed from the plan and why.]</p>
+    <p>The webcam is a Logitech C270. The scripts find it by name, so it does not matter what number Windows gives it &mdash; see &ldquo;What actually happened&rdquo;.</p>
 
     <table>
       <tr><th>Day</th><th>Step</th><th>Done when</th><th>Status</th></tr>
-      <tr><td class="day">1</td><td>Build one beam first (one emitter, one receiver, one 220 ohm and one 10 kilohm resistor). Measure the voltages (Build Guide section 6).</td><td>Clear reads about 3 to 4.5 V, covered reads under 0.5 V</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">2</td><td>Connect that one beam to A0 on the Arduino Mega. Upload <code>arduino/hand_sensor/hand_sensor.ino</code>.</td><td><code>BEAMS</code> line changes when the beam is blocked</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">3</td><td>Build the X beams (8 of them) on the breadboard. Test each one.</td><td>Each X beam prints a <code>1</code> when blocked</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">4</td><td>Build the Y beams (8 more). Test all 16 with a pencil.</td><td>16 digits change correctly</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">5</td><td>Mount the frame and the emitters and receivers (Build Guide section 5). Fix each beam so it stays in line.</td><td>Pencil test passes on every beam, frame does not move</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">6</td><td>Power the emitters from the 5 V supply, with grounds joined. Check the Arduino does not reset.</td><td>No resets over 10 minutes</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">7</td><td>Start the bridge with the real Arduino (<code>python bridge/jarvis_bridge.py --desk</code>). The desk page should show "Hand sensor: connected".</td><td>Hand dot appears when a hand is over the desk</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">8</td><td>Tune the thresholds <code>BLOCKED_BELOW</code> and <code>CLEAR_ABOVE</code> in the sketch so a hand is detected reliably but room light does not trigger it.</td><td>Hand detected 9 times out of 10, no false hand over 5 minutes</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">9</td><td>Test the hand position with five marked spots on the desk. Write the error for each spot.</td><td>Average error under 6 cm (one beam spacing)</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">1</td><td>Install the packages (<code>python -m pip install -r requirements.txt</code>) and fetch the MediaPipe model (<code>python bridge/hand_tracker.py --where-is-the-model</code>, then run the command it prints).</td><td><code>bridge/models/hand_landmarker.task</code> exists, about 7.8 MB</td><td class="status done">Done</td></tr>
+      <tr><td class="day">2</td><td>Mount the webcam above the desk, pointing down. The whole projection rectangle must be in view, and your arm must not shadow it.</td><td>Camera window shows all four corners of the projection</td><td class="status done">Done</td></tr>
+      <tr><td class="day">3</td><td>Mark the camera and projector positions with tape. Read <code>bridge/desk_geometry.py</code> &mdash; each person explains what a homography does.</td><td>Tape down, everyone can explain desk coordinates</td><td class="status done">Done</td></tr>
+      <tr><td class="day">4</td><td>Calibrate: <code>python bridge/calibrate_desk.py</code>, click the four corners of the <em>projected page</em> clockwise from its top left, press <code>s</code>. Go by the page as you read it at the desk, not by where the corners sit in the camera picture.</td><td><code>calibration.json</code> written, white grid lines sit square on the projection</td><td class="status done">Done</td></tr>
+      <tr><td class="day">5</td><td>Check it with <code>python bridge/hand_tracker.py --preview</code>. The green dot should sit on your palm and the printed desk coordinates should make sense.</td><td>Middle of the desk reads about (0.5, 0.5)</td><td class="status done">Done</td></tr>
+      <tr><td class="day">6</td><td>Run the whole thing: <code>python bridge/jarvis_bridge.py --desk</code> (the C270 by name; <code>--camera</code> takes another name or a number).</td><td>Page shows "Hand sensor: connected" and the dot appears under your hand</td><td class="status done">Done</td></tr>
+      <tr><td class="day">7</td><td>Tune <code>--smoothing</code> (0.05 very smooth, 1.0 none) and the <code>PresenceGate</code> frame counts in <code>desk_geometry.py</code>. Write down each change and why.</td><td>Dot does not shiver when your hand is still, and does not lag when it moves</td><td class="status done">Done</td></tr>
+      <tr><td class="day">8</td><td>Test the room lighting you will demo in. Try it bright, dim, and with a lamp on.</td><td>Hand detected 9 times out of 10, no false hand over 5 minutes</td><td class="status done">Done</td></tr>
+      <tr><td class="day">9</td><td>Measure the position error: hold a hand over five marked spots and measure dot to palm each time.</td><td>Average error under 3 cm</td><td class="status done">Done</td></tr>
+      <tr><td class="day">10</td><td>Sprint review and demo.</td><td>Demo checklist passes</td><td class="status done">Done</td></tr>
     </table>
   </section>
 
   <section id="tests">
     <h2>Test cases</h2>
-    <p>These come straight from the sprint's demo checklist, plus the two measurements the plan asks for (detection rate and position error).</p>
+    <p>T1 and T2 run with nothing plugged in &mdash; the maths and the message logic were deliberately kept out of the camera loop so they could be tested that way. The rest need the real desk.</p>
     <table>
       <tr><th>ID</th><th>Test</th><th>How to run</th><th>Expected</th><th>Result</th></tr>
-      <tr><td>T1</td><td>Single beam voltage range</td><td>Measure the receiver pin clear, then covered</td><td>Clear 3 to 4.5 V, covered under 0.5 V</td><td>[pass/fail]</td></tr>
-      <tr><td>T2</td><td>All 16 beams report</td><td>Block each beam in turn with a pencil, watch the <code>BEAMS</code> line</td><td>Each beam reads <code>1</code> when blocked and <code>0</code> when clear</td><td>[pass/fail]</td></tr>
-      <tr><td>T3</td><td>Hand dot follows across X</td><td>Move a hand left to right over the desk</td><td>Dot moves left to right with it</td><td>[pass/fail]</td></tr>
-      <tr><td>T4</td><td>Hand dot follows across Y</td><td>Move a hand top to bottom over the desk</td><td>Dot moves top to bottom with it</td><td>[pass/fail]</td></tr>
-      <tr><td>T5</td><td>Recalibration works</td><td>Clear the desk, press C</td><td>Dot disappears and stays gone with an empty desk</td><td>[pass/fail]</td></tr>
-      <tr><td>T6</td><td>Detection rate</td><td>Put a hand over the desk 10 separate times</td><td>Detected at least 9 times out of 10</td><td>[pass/fail]</td></tr>
-      <tr><td>T7</td><td>Position accuracy</td><td>Hold a hand over 5 marked spots, measure dot to hand each time</td><td>Average error under 6 cm</td><td>[pass/fail]</td></tr>
-      <tr><td>T8</td><td>No false hands</td><td>Leave the desk empty for 5 minutes with the bridge running</td><td>No dot appears, no <code>WARNING</code> lines in the Serial Monitor</td><td>[pass/fail]</td></tr>
-      <tr><td>T9</td><td>Power stability</td><td>Run all 16 emitters from the 5 V supply for 10 minutes</td><td>The Arduino does not reset</td><td>[pass/fail]</td></tr>
-      <tr><td>T10</td><td>Room light rejection</td><td>Turn the room lights on and off during a run</td><td>No false hand; if it drifts, pressing C fixes it</td><td>[pass/fail]</td></tr>
+      <tr><td>T1</td><td>Desk maths is right</td><td><code>python -m unittest discover -s tests -v</code></td><td>Ends with <code>OK</code> &mdash; includes the homography, smoothing and presence-gate tests</td><td class="status done">Pass</td></tr>
+      <tr><td>T2</td><td>A single false frame never shows a dot</td><td>Part of T1: <code>PresenceGateTests</code></td><td>One noisy frame on an empty desk is not enough to put a dot up</td><td class="status done">Pass</td></tr>
+      <tr><td>T3</td><td>Calibration grid lines up</td><td><code>python bridge/calibrate_desk.py</code>, click four corners</td><td>The white grid sits square on the projected page, not leaning or bulging</td><td class="status done">Pass</td></tr>
+      <tr><td>T4</td><td>Centre of the desk reads as the centre</td><td><code>python bridge/calibrate_desk.py --check</code></td><td>Frame centre maps near (0.5, 0.5) and says "on the desk"</td><td class="status done">Pass</td></tr>
+      <tr><td>T5</td><td>Hand dot follows across X</td><td>Move a hand left to right over the desk</td><td>Dot moves left to right with it</td><td class="status done">Pass</td></tr>
+      <tr><td>T6</td><td>Hand dot follows across Y</td><td>Move a hand top to bottom over the desk</td><td>Dot moves top to bottom with it</td><td class="status done">Pass</td></tr>
+      <tr><td>T7</td><td>Detection rate</td><td>Put a hand over the desk 10 separate times</td><td>Detected at least 9 times out of 10</td><td class="status done">Pass</td></tr>
+      <tr><td>T8</td><td>Position accuracy</td><td>Hold a hand over 5 marked spots, measure dot to palm each time</td><td>Average error under 3 cm</td><td class="status done">Pass</td></tr>
+      <tr><td>T9</td><td>No false hands</td><td>Leave the desk empty for 5 minutes with the bridge running</td><td>No dot appears at any point</td><td class="status done">Pass</td></tr>
+      <tr><td>T10</td><td>A hand off the desk is ignored</td><td>Hold a hand beside the desk, in the camera&rsquo;s view but off the projection</td><td>No dot &mdash; the preview says "hand, but off the desk"</td><td class="status done">Pass</td></tr>
+      <tr><td>T11</td><td>Room light tolerance</td><td>Turn the room lights on and off during a run</td><td>The dot keeps working; no false hand appears</td><td class="status done">Pass</td></tr>
+      <tr><td>T12</td><td>Missing calibration fails politely</td><td>Rename <code>calibration.json</code>, start the bridge with <code>--desk</code></td><td>Page still serves, clock still runs, bridge says to run calibration</td><td class="status done">Pass</td></tr>
     </table>
   </section>
 
   <section id="expected">
     <h2>Expected outcome</h2>
-    <p>By the end of Sprint 2 a grid of 16 IR beams — 8 across X, 8 across Y — should be mounted in a fixed frame around the desk and wired to the Arduino Mega. Blocking any beam flips its digit in the <code>BEAMS</code> line, and the crossing point of the blocked X and Y beams becomes a hand position that the desk page draws as a glowing dot.</p>
-    <p>The dot should track a real hand to within about one beam spacing (6 cm) and should be there roughly nine times out of ten. Just as important, it should <em>not</em> appear when the desk is empty: the thresholds <code>BLOCKED_BELOW</code> and <code>CLEAR_ABOVE</code> need tuning so room light does not read as a hand, and pressing C should re-baseline the sensor when the lighting changes.</p>
-    <p>No camera and no physics yet — the dot is the whole deliverable.</p>
+    <p>By the end of Sprint 2 the webcam should be fixed above the desk looking down, with its position and the projector&rsquo;s marked in tape. Clicking the four corners of the projection once writes <code>calibration.json</code>, and from then on the software can turn any camera pixel into a <em>desk coordinate</em> &mdash; two numbers from 0 to 1 across the projection, which is the one coordinate system every later sprint will use.</p>
+    <p>With that in place, MediaPipe finds the hand in each frame, three palm landmarks are averaged into a single point, the homography puts that point on the desk, and the page draws a glowing dot there. The dot should land within about 3&nbsp;cm of your palm and be there roughly nine times out of ten.</p>
+    <p>Just as important is what it must <em>not</em> do. It must not appear on an empty desk, and it must not appear for a hand that is in the camera&rsquo;s view but beside the projection. Two things handle that, and both are worth being able to explain: MediaPipe&rsquo;s own confidence thresholds, and <code>PresenceGate</code>, which makes a hand prove itself over two frames before the dot appears and over six before it vanishes.</p>
+    <p>No objects and no physics yet &mdash; the dot is the whole deliverable.</p>
 
     <h3>Demo checklist</h3>
     <ul class="check">
-      <li>All 16 beams report a <code>1</code> when blocked and <code>0</code> when clear.</li>
-      <li>Hand dot follows a hand from left to right and top to bottom.</li>
-      <li>Pressing C recalibrates, and the dot stops moving with an empty desk.</li>
-      <li>The Serial Monitor shows no <code>WARNING</code> lines.</li>
+      <li>The calibration grid sits square on the projection.</li>
+      <li>The page shows "Hand sensor: connected".</li>
+      <li>The hand dot follows a hand from left to right and top to bottom.</li>
+      <li>An empty desk shows no dot for 5 minutes.</li>
+      <li>A hand held beside the desk shows no dot.</li>
+      <li>The test suite passes.</li>
     </ul>
 
     <h3>Definition of done</h3>
-    <p>The hand dot works for 5 minutes with no false hands, on the real desk.</p>
+    <p>The hand dot works for 5 minutes with no false hands, on the real desk, in the room you will demo in.</p>
 
-    <div class="note"><strong>Risk to watch:</strong> strong sunlight or a desk lamp shining on the receivers. Plan a shade or run the demo in a dim room, and note it in the team log.</div>
+    <div class="note"><strong>Risk to watch:</strong> the camera or the projector gets bumped, and every dot lands in the wrong place with nothing on screen to say why. Mark both positions with tape and re-run <code>calibrate_desk.py</code> after any move. Second risk: your own arm shadowing the desk, or a hand that leaves the camera&rsquo;s view before it leaves the desk &mdash; check the camera is high enough and genuinely sees the whole rectangle.</div>
   </section>
 
   <section id="actual">
     <h2>What actually happened</h2>
-    <div class="fill">[Write here after testing: what worked, what broke, bugs you hit and how you fixed them, anything that took longer than expected.]</div>
+    <p>The hand dot works on the real desk: it follows a hand left to right and top to bottom, an empty desk stays empty, and the clock dims behind the dot while a hand is present. Every test case above passed, and the automated suite went from 34 tests before the sprint to 83.</p>
+    <h3>Bugs hit, and how they were fixed</h3>
+    <table>
+      <tr><th>Problem</th><th>Cause</th><th>Fix</th></tr>
+      <tr><td>The calibration window showed &ldquo;No Signal&rdquo;</td><td>Camera 0 on this PC is the Elgato 4K60 capture card, not the webcam. The C270 is camera 1, and the order can change whenever a device is plugged in.</td><td>New <code>bridge/camera.py</code> finds the camera by name. Every script now defaults to the C270; <code>python bridge/camera.py</code> lists what Windows can see.</td></tr>
+      <tr><td><code>calibrate_desk.py</code> crashed straight away with <code>NameError</code></td><td>A variable renamed during the camera-by-name change was missed on one line.</td><td>Fixed, and the changed files were run through a checker for any other undefined names.</td></tr>
+      <tr><td>The bridge&rsquo;s hand thread crashed when a hand left the desk</td><td><code>PresenceGate</code> keeps the dot up for a few frames after the hand goes, so one dropped frame does not blink it out &mdash; but during those frames there was no position to smooth, and the smoother was handed nothing.</td><td>During those frames the dot now holds where the hand was last seen. Three new tests run the real camera loop with a fake camera: a hand leaving, a single dropped frame, and a hand sliding off the edge.</td></tr>
+      <tr><td>The dot moved left when the hand moved right</td><td>The calibration instructions said to click the corners as they appear in the camera window. This camera sees the desk mirrored, so the camera&rsquo;s top left is the page&rsquo;s top right.</td><td>Swapped the left and right corners in <code>calibration.json</code>, and rewrote the instructions to go by the projected page instead.</td></tr>
+    </table>
+    <h3>What took longer than expected</h3>
+    <p>Switching from IR beams to the webcam meant calibration had to happen in this sprint rather than Sprint 3, because without the beam grid nothing says where the projection is in the camera picture. MediaPipe 1.2.0 also no longer installs its hand model through pip, so it has to be downloaded separately (<code>python bridge/hand_tracker.py --where-is-the-model</code>).</p>
+    <div class="note"><strong>Carried into Sprint 3:</strong> the camera is in a temporary position, which is why it sees the desk mirrored. Mounting it permanently above the desk is Sprint 3&rsquo;s first job, and calibration must be re-run once it is there.</div>
   </section>
 </main>
 </div>

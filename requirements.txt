@@ -1,7 +1,8 @@
 # Jarvis Desk - Python dependencies
 #
 # pyserial is what the bridge (bridge/jarvis_bridge.py) uses to read the
-# Arduino over USB. Nothing else in the bridge is outside the standard library.
+# Arduino over USB. Apart from that and the two camera packages below, the
+# bridge is all standard library.
 #
 # pyttsx3 drives the offline text-to-speech prototypes. The two entries below
 # it are the platform backends pyttsx3 uses; they are listed explicitly because
@@ -11,6 +12,20 @@
 #   sudo apt install espeak-ng libespeak1     # Debian / Ubuntu
 #   sudo dnf install espeak-ng                # Fedora
 #   sudo pacman -S espeak-ng                  # Arch
+
+# mediapipe finds the hand in the webcam picture and opencv-python opens the
+# camera and draws the calibration window. Together they are the Sprint 2
+# "hand sensor" - there is no IR hardware any more.
+#
+# MediaPipe also needs a model file that pip does NOT install. Fetch it once:
+#   python bridge/hand_tracker.py --where-is-the-model
+# and run the command it prints.
+
+mediapipe>=1.2.0
+opencv-python>=4.10
+# pygrabber reads camera NAMES on Windows, so the scripts can find the
+# Logitech C270 whatever number Windows gave it (see bridge/camera.py).
+pygrabber>=0.2; sys_platform == "win32"
 
 pyserial>=3.5
 pyttsx3>=2.90

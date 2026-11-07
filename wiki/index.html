@@ -33,7 +33,7 @@
   <p class="sub">Jarvis Desk · FocusedAI internship</p>
 
   <dl class="infobox">
-    <dt>Project</dt><dd>A projector draws onto a desk, 16 IR beams track your hand, and an overhead camera recognises marker-tagged objects.</dd>
+    <dt>Project</dt><dd>A projector draws onto a desk, an overhead webcam tracks your hand with MediaPipe, and the same camera recognises marker-tagged objects.</dd>
     <dt>Length</dt><dd>7 sprints over 12 weeks, 2 sessions a week of 90 minutes</dd>
     <dt>Started</dt><dd>9 October 2026</dd>
     <dt>Done when</dt><dd>The Sprint 6 demo checklist passes</dd>
@@ -45,7 +45,7 @@
       <tr><th>Sprint</th><th>Weeks</th><th>Focus</th><th>Status</th></tr>
       <tr><td><a href="sprint-0.html">Sprint 0</a></td><td>1</td><td>Setup and plan</td><td class="status todo">In progress</td></tr>
       <tr><td><a href="sprint-1.html">Sprint 1</a></td><td>2–3</td><td>Buttons and screen</td><td class="status todo">In progress</td></tr>
-      <tr><td><a href="sprint-2.html">Sprint 2</a></td><td>4–5</td><td>Hand sensor</td><td class="status todo">Not started</td></tr>
+      <tr><td><a href="sprint-2.html">Sprint 2</a></td><td>4–5</td><td>Hand sensor</td><td class="status done">Done</td></tr>
       <tr><td><a href="sprint-3.html">Sprint 3</a></td><td>6–7</td><td>Camera and calibration</td><td class="status todo">Not started</td></tr>
       <tr><td><a href="sprint-4.html">Sprint 4</a></td><td>8–9</td><td>Physics loop</td><td class="status todo">Not started</td></tr>
       <tr><td><a href="sprint-5.html">Sprint 5</a></td><td>10–11</td><td>Polish and proof</td><td class="status todo">Not started</td></tr>
@@ -60,8 +60,8 @@
       <tr><th>Sprint</th><th>Goal</th><th>Demo at the end</th></tr>
       <tr><td>S0 Setup and plan</td><td>Everything installed, plan made, parts ordered</td><td>Tests pass and the button page runs with the keyboard</td></tr>
       <tr><td>S1 Buttons and screen</td><td>Physical buttons and knob control a live projector screen</td><td>Clock, timer and stopwatch run from the real buttons</td></tr>
-      <tr><td>S2 Hand sensor</td><td>16 IR beams show where a hand is</td><td>A glowing hand dot follows a real hand</td></tr>
-      <tr><td>S3 Camera and calibration</td><td>Camera sees marker objects and lines up with the projection</td><td>Rings sit on real objects and stay there when moved</td></tr>
+      <tr><td>S2 Hand sensor</td><td>The webcam and MediaPipe show where a hand is</td><td>A glowing hand dot follows a real hand</td></tr>
+      <tr><td>S3 Camera and calibration</td><td>Camera mounted for good, sees marker objects, and the calibration is proven accurate</td><td>Rings sit on real objects and stay there when moved</td></tr>
       <tr><td>S4 Physics loop</td><td>Balls bounce off hands and objects</td><td>Balls bounce off a real mug and get picked up by a hand</td></tr>
       <tr><td>S5 Polish and proof</td><td>Stable, documented, tested</td><td>Full run without a teacher's help</td></tr>
       <tr><td>S6 Showcase</td><td>Presentation and reflection</td><td>Final demo to the class or a judge</td></tr>
@@ -74,13 +74,13 @@
     <p>The <strong>MVP</strong> is what must be done for a successful project:</p>
     <ul>
       <li>Sprint 1: buttons, knob, clock, timer and stopwatch.</li>
-      <li>Sprint 2: hand dot from the IR beams.</li>
+      <li>Sprint 2: hand dot from the webcam, and the four-corner calibration it needs.</li>
       <li>Sprint 3: rings on registered objects, calibrated.</li>
     </ul>
     <p><strong>Stretch goals</strong>, only after the MVP demo passes:</p>
     <ul>
       <li>Sprint 4: balls and physics.</li>
-      <li>More beams, or a second hand.</li>
+      <li>A second hand.</li>
       <li>Speech for object names.</li>
       <li>A saved log of what was on the desk and when.</li>
     </ul>
@@ -92,10 +92,10 @@
     <table>
       <tr><th>Risk</th><th>Likelihood</th><th>Effect</th><th>Plan</th></tr>
       <tr><td>Parts arrive late</td><td>Medium</td><td>Sprint 1 or 2 delayed</td><td>Order in Sprint 0. Start with the parts already on hand — Sprint 1 needs only an Arduino and 4 buttons</td></tr>
-      <tr><td>IR beams give false hands in sunlight</td><td class="status todo">High</td><td>Hand dot jumps around</td><td>Shade the receivers, demo in a dim room, recalibrate with the C key</td></tr>
+      <tr><td>Camera or projector gets bumped after calibration</td><td class="status todo">High</td><td>Every dot lands in the wrong place, with nothing on screen to say why</td><td>Mark both positions with tape and re-run <code>calibrate_desk.py</code> after any move</td></tr>
       <tr><td>Calibration error stays high</td><td>Medium</td><td>Rings land in the wrong place</td><td>Fix camera and projector positions first with tape marks, then re-run calibration</td></tr>
       <tr><td>Serial Monitor blocks the bridge</td><td class="status todo">High</td><td>"Could not use COM3"</td><td>Close the Serial Monitor before starting the bridge. Put it on the setup card</td></tr>
-      <tr><td>Power problems with 16 IR LEDs</td><td>Medium</td><td>Arduino resets</td><td>Use the 5 V supply and join the grounds</td></tr>
+      <tr><td>Poor room light, or an arm shadowing the desk</td><td>Medium</td><td>MediaPipe loses the hand and the dot blinks out</td><td>Mount the camera high enough to see the whole rectangle, and test in the demo room&rsquo;s real lighting</td></tr>
       <tr><td>Someone is absent</td><td>Medium</td><td>Work stops</td><td>Every task has a second person who knows the steps. Keep the board up to date</td></tr>
       <tr><td>Scope too big</td><td class="status todo">High</td><td>Demo not ready</td><td>Protect the MVP: Sprints 1 to 3 are the minimum, Sprint 4 is the stretch goal</td></tr>
     </table>
