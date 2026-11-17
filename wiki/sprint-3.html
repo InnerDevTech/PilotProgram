@@ -53,7 +53,7 @@
     <ul>
       <li>Camera pixels to desk coordinates (the homography), saved in <code>calibration.json</code>.</li>
       <li>Four-corner calibration tool with a grid drawn back over the camera picture.</li>
-      <li>Bridge option to turn the camera on (<code>--desk</code>, or <code>--camera</code> with a name or number).</li>
+      <li>The camera runs by default with the C270 (<code>--camera</code> picks another by name or number, <code>--no-camera</code> turns it off).</li>
       <li>A page layer over the screens that can draw on the desk (the hand dot uses it; the rings will too).</li>
     </ul>
 
@@ -63,7 +63,7 @@
       <tr><td class="day">2</td><td>Lock the projector focus and turn off keystone correction. Mark both positions with tape. Re-run <code>python bridge/calibrate_desk.py</code> for the new camera position.</td><td>Projection edges are straight, new <code>calibration.json</code> saved, hand dot still follows</td><td class="status todo">To do</td></tr>
       <tr><td class="day">3</td><td>Write <code>bridge/make_markers.py</code>: it makes printable ArUco markers (OpenCV has them built in). Print 4 at 100% scale.</td><td>Black square measures about 4 cm</td><td class="status todo">To do</td></tr>
       <tr><td class="day">4</td><td>Write the marker finder (<code>bridge/object_tracker.py</code>): find markers in each camera frame and turn their centres into desk coordinates with the existing calibration. Add a <code>--preview</code> like the hand tracker&rsquo;s.</td><td>Preview draws a box and an ID on each marker</td><td class="status todo">To do</td></tr>
-      <tr><td class="day">5</td><td>Share the camera: one loop reads each frame and gives it to both the hand finder and the marker finder (the camera can only be opened once). Run <code>python bridge/jarvis_bridge.py --desk</code>.</td><td>Hand dot and marker positions both arrive at the page</td><td class="status todo">To do</td></tr>
+      <tr><td class="day">5</td><td>Share the camera: one loop reads each frame and gives it to both the hand finder and the marker finder (the camera can only be opened once). Run <code>python bridge/jarvis_bridge.py</code>.</td><td>Hand dot and marker positions both arrive at the page</td><td class="status todo">To do</td></tr>
       <tr><td class="day">6</td><td>Create <code>objects.json</code> (marker ID to name). Draw the rings on the page: blue with the name for a registered marker, amber for an unknown one.</td><td>Ring appears on the object with its name</td><td class="status todo">To do</td></tr>
       <tr><td class="day">7</td><td>Add the calibration check: the page shows target crosses at known desk positions, you put a marker on each, and the bridge reports the average error.</td><td>Average error under 2% of the desk width</td><td class="status todo">To do</td></tr>
       <tr><td class="day">8</td><td>Move the object to 5 spots and measure ring centre to object centre. Add 3 more objects to <code>objects.json</code>. Check a hand passing over a marker does not make its ring flicker away.</td><td>Average offset under 2 cm; rings ride out a hand passing over</td><td class="status todo">To do</td></tr>
@@ -81,7 +81,7 @@
       <tr><td>T2</td><td>Camera sees the whole desk from its mount</td><td><code>python bridge/hand_tracker.py --preview</code></td><td>The full projection rectangle is in frame</td><td>[pass/fail]</td></tr>
       <tr><td>T3</td><td>Markers printed at the right size</td><td>Measure the black square on a printed marker</td><td>About 4 cm</td><td>[pass/fail]</td></tr>
       <tr><td>T4</td><td>Calibration is accurate</td><td>Run the calibration check (day 7)</td><td>Average error under 2%</td><td>[pass/fail]</td></tr>
-      <tr><td>T5</td><td>Hand and objects together</td><td><code>python bridge/jarvis_bridge.py --desk</code></td><td>Hand dot and rings both work at once</td><td>[pass/fail]</td></tr>
+      <tr><td>T5</td><td>Hand and objects together</td><td><code>python bridge/jarvis_bridge.py</code></td><td>Hand dot and rings both work at once</td><td>[pass/fail]</td></tr>
       <tr><td>T6</td><td>Registered object</td><td>Place an object listed in <code>objects.json</code> on the desk</td><td>Blue ring plus the object&rsquo;s name</td><td>[pass/fail]</td></tr>
       <tr><td>T7</td><td>Unregistered marker</td><td>Place a marker that is not in <code>objects.json</code></td><td>Amber ring, no name</td><td>[pass/fail]</td></tr>
       <tr><td>T8</td><td>Ring offset</td><td>Move the object to 5 spots, measure ring centre to object centre</td><td>Average offset under 2 cm</td><td>[pass/fail]</td></tr>

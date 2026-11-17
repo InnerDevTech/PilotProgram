@@ -65,7 +65,7 @@
       <tr><td class="day">3</td><td>Mark the camera and projector positions with tape. Read <code>bridge/desk_geometry.py</code> &mdash; each person explains what a homography does.</td><td>Tape down, everyone can explain desk coordinates</td><td class="status done">Done</td></tr>
       <tr><td class="day">4</td><td>Calibrate: <code>python bridge/calibrate_desk.py</code>, click the four corners of the <em>projected page</em> clockwise from its top left, press <code>s</code>. Go by the page as you read it at the desk, not by where the corners sit in the camera picture.</td><td><code>calibration.json</code> written, white grid lines sit square on the projection</td><td class="status done">Done</td></tr>
       <tr><td class="day">5</td><td>Check it with <code>python bridge/hand_tracker.py --preview</code>. The green dot should sit on your palm and the printed desk coordinates should make sense.</td><td>Middle of the desk reads about (0.5, 0.5)</td><td class="status done">Done</td></tr>
-      <tr><td class="day">6</td><td>Run the whole thing: <code>python bridge/jarvis_bridge.py --desk</code> (the C270 by name; <code>--camera</code> takes another name or a number).</td><td>Page shows "Hand sensor: connected" and the dot appears under your hand</td><td class="status done">Done</td></tr>
+      <tr><td class="day">6</td><td>Run the whole thing: <code>python bridge/jarvis_bridge.py</code>. The hand sensor is on by default with the C270, found by name; <code>--camera</code> takes another name or number, and <code>--no-camera</code> turns it off.</td><td>Page shows "Hand sensor: connected" and the dot appears under your hand</td><td class="status done">Done</td></tr>
       <tr><td class="day">7</td><td>Tune <code>--smoothing</code> (0.05 very smooth, 1.0 none) and the <code>PresenceGate</code> frame counts in <code>desk_geometry.py</code>. Write down each change and why.</td><td>Dot does not shiver when your hand is still, and does not lag when it moves</td><td class="status done">Done</td></tr>
       <tr><td class="day">8</td><td>Test the room lighting you will demo in. Try it bright, dim, and with a lamp on.</td><td>Hand detected 9 times out of 10, no false hand over 5 minutes</td><td class="status done">Done</td></tr>
       <tr><td class="day">9</td><td>Measure the position error: hold a hand over five marked spots and measure dot to palm each time.</td><td>Average error under 3 cm</td><td class="status done">Done</td></tr>
@@ -89,7 +89,7 @@
       <tr><td>T9</td><td>No false hands</td><td>Leave the desk empty for 5 minutes with the bridge running</td><td>No dot appears at any point</td><td class="status done">Pass</td></tr>
       <tr><td>T10</td><td>A hand off the desk is ignored</td><td>Hold a hand beside the desk, in the camera&rsquo;s view but off the projection</td><td>No dot &mdash; the preview says "hand, but off the desk"</td><td class="status done">Pass</td></tr>
       <tr><td>T11</td><td>Room light tolerance</td><td>Turn the room lights on and off during a run</td><td>The dot keeps working; no false hand appears</td><td class="status done">Pass</td></tr>
-      <tr><td>T12</td><td>Missing calibration fails politely</td><td>Rename <code>calibration.json</code>, start the bridge with <code>--desk</code></td><td>Page still serves, clock still runs, bridge says to run calibration</td><td class="status done">Pass</td></tr>
+      <tr><td>T12</td><td>Missing calibration fails politely</td><td>Rename <code>calibration.json</code>, start the bridge</td><td>Page still serves, clock still runs, bridge says to run calibration</td><td class="status done">Pass</td></tr>
     </table>
   </section>
 
@@ -129,6 +129,7 @@
     </table>
     <h3>What took longer than expected</h3>
     <p>Switching from IR beams to the webcam meant calibration had to happen in this sprint rather than Sprint 3, because without the beam grid nothing says where the projection is in the camera picture. MediaPipe 1.2.0 also no longer installs its hand model through pip, so it has to be downloaded separately (<code>python bridge/hand_tracker.py --where-is-the-model</code>).</p>
+    <div class="note"><strong>Changed after the sprint (16 November):</strong> the hand sensor is now <em>on by default</em>, so plain <code>python bridge/jarvis_bridge.py</code> runs the buttons, the screens and the hand dot together. <code>--no-camera</code> turns it off, and the old <code>--desk</code> still works. A missing camera, model or calibration only switches the dot off &mdash; the clock and timer keep running. The tests moved to <code>python -m pytest tests</code> (87 tests), because <code>unittest discover</code> silently skipped the camera tests.</div>
     <div class="note"><strong>Carried into Sprint 3:</strong> the camera is in a temporary position, which is why it sees the desk mirrored. Mounting it permanently above the desk is Sprint 3&rsquo;s first job, and calibration must be re-run once it is there.</div>
   </section>
 </main>

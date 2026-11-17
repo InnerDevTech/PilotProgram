@@ -23,14 +23,24 @@ The page is at http://localhost:8000. Ctrl+C stops the bridge.
 Sprint 2 adds the hand sensor. It is not a second Arduino in the end - it is
 the webcam plus MediaPipe, in bridge/hand_tracker.py. It is built to the same
 shape as SerialLink below (start, stop, status_event) and feeds the same
-Broadcaster, so the only thing this file does for it is switch it on:
+Broadcaster. It is ON by default, using the Logitech C270 found by name:
 
-    python bridge/jarvis_bridge.py --desk         # buttons AND the hand dot (C270)
+    python bridge/jarvis_bridge.py                # buttons AND the hand dot (C270)
+    python bridge/jarvis_bridge.py --camera 1     # a different camera
+    python bridge/jarvis_bridge.py --no-camera    # buttons only, no OpenCV
 
-Calibrate once before that, or the tracker has no way to know which part of
-the camera picture is the desk:
+A missing camera, model or calibration only switches the hand dot off - the
+clock and timer keep working, and the bridge prints what to fix.
+
+Calibrate once before the first run, or the tracker has no way to know which
+part of the camera picture is the desk:
 
     python bridge/calibrate_desk.py
+
+Sprint 3 adds the object sensor (bridge/object_tracker.py). It runs inside
+the hand tracker's camera loop, and only while the page shows the Desk
+screen: the page sends POST /objects?on=1 when it opens Desk (which also
+re-photographs the empty desk) and POST /objects?on=0 when it leaves.
 """
 
 import argparse
@@ -43,6 +53,7 @@ import webbrowser
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 # Casting to the projector lives in its own file; it is all Windows API calls
 # and none of it is needed to serve the page.
@@ -293,7 +304,7 @@ class SerialLink:
 # ------------------------------------------------------------- http server --
 
 class JarvisServer(ThreadingHTTPServer):
-    """Serves web/ plus /events and /beep. One thread per request."""
+    """Serves web/ plus /events, /beep and /objects. One thread per request."""
 
     daemon_threads = True
 
@@ -302,9 +313,10 @@ class JarvisServer(ThreadingHTTPServer):
     # below would never appear.
     allow_reuse_address = False
 
-    def __init__(self, address, handler, broadcaster, link):
+    def __init__(self, address, handler, broadcaster, link, hands=None):
         self.broadcaster = broadcaster
         self.link = link
+        self.hands = hands          # the HandTracker, or None with --no-camera
         super().__init__(address, handler)
 
     def handle_error(self, request, client_address):
@@ -318,7 +330,7 @@ class JarvisServer(ThreadingHTTPServer):
 
 
 class JarvisHandler(SimpleHTTPRequestHandler):
-    """Static files from web/, with two extra routes bolted on."""
+    """Static files from web/, with a few extra routes bolted on."""
 
     def log_message(self, fmt, *args):
         # Silence the per-request logging so real messages stand out.
@@ -336,7 +348,11 @@ class JarvisHandler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        if self.path.split("?")[0] != "/beep":
+        route = self.path.split("?")[0]
+        if route == "/objects":
+            self.switch_objects()
+            return
+        if route != "/beep":
             self.send_error(404)
             return
 
@@ -346,6 +362,25 @@ class JarvisHandler(SimpleHTTPRequestHandler):
         else:
             # No Arduino: the page falls back to beeping by itself.
             self.send_response(503)
+
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def switch_objects(self):
+        """POST /objects?on=1 or ?on=0: the Desk screen opened or closed.
+
+        503 when there is no camera (--no-camera, or OpenCV missing), so the
+        page can say so instead of waiting for objects that never come.
+        """
+        query = parse_qs(urlparse(self.path).query)
+        on = query.get("on", ["1"])[0] not in ("0", "false", "off")
+
+        hands = self.server.hands
+        if hands is None:
+            self.send_response(503)
+        else:
+            hands.set_objects(on)
+            self.send_response(200)
 
         self.send_header("Content-Length", "0")
         self.end_headers()
@@ -380,10 +415,10 @@ class JarvisHandler(SimpleHTTPRequestHandler):
         self.wfile.flush()
 
 
-def make_server(http_port, broadcaster, link):
+def make_server(http_port, broadcaster, link, hands=None):
     """Build the HTTP server. Used by main() and by the tests."""
     handler = partial(JarvisHandler, directory=str(WEB_DIR))
-    return JarvisServer(("127.0.0.1", http_port), handler, broadcaster, link)
+    return JarvisServer(("127.0.0.1", http_port), handler, broadcaster, link, hands)
 
 
 # -------------------------------------------------------------------- main --
@@ -423,22 +458,36 @@ def build_parser():
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="print every line received from the Arduino")
     parser.add_argument("--camera", metavar="NAME_OR_N",
-                        help="webcam for the hand sensor (Sprint 2): a name "
-                             "such as C270, or a number")
+                        help="webcam for the hand sensor: a name or a number "
+                             f"(default {DEFAULT_CAMERA})")
+    parser.add_argument("--no-camera", action="store_true",
+                        help="turn the hand sensor off (buttons and screens only)")
     parser.add_argument("--desk", action="store_true",
-                        help="turn on the hand sensor with the C270 webcam")
+                        help=argparse.SUPPRESS)  # old spelling; the camera is on by default now
     parser.add_argument("--smoothing", type=float, default=0.35, metavar="W",
                         help="hand dot steadiness: 0.05 very smooth, 1.0 none "
                              "(default 0.35)")
     return parser
 
 
+# The desk webcam, matched by name (see bridge/camera.py). Kept as a plain
+# string so a --no-camera start never has to import the camera code.
+DEFAULT_CAMERA = "C270"
+
+
+def choose_camera(args):
+    """Which camera the hand sensor should use, or None to leave it off."""
+    if args.no_camera:
+        return None
+    return args.camera if args.camera is not None else DEFAULT_CAMERA
+
+
 def load_hand_tracker():
-    """Import bridge/hand_tracker.py, but only when --camera asks for it.
+    """Import bridge/hand_tracker.py, but only when the hand sensor is on.
 
     It drags in OpenCV and MediaPipe, which together take a few seconds to
     import. Doing that at the top of this file would slow down every plain
-    "python bridge/jarvis_bridge.py" for a feature it is not using.
+    "python bridge/jarvis_bridge.py --no-camera" for a feature it is not using.
     """
     try:
         from bridge import hand_tracker
@@ -506,12 +555,13 @@ def main(argv=None):
     # The hand sensor (Sprint 2). It starts its own thread and reports its own
     # problems, so a camera that will not open never stops the page serving.
     hands = None
-    camera_index = "C270" if args.desk and args.camera is None else args.camera
+    camera_index = choose_camera(args)
     if camera_index is not None:
         tracker_module = load_hand_tracker()
         if tracker_module is None:
-            print("The hand sensor needs OpenCV and MediaPipe. "
-                  "Run: python -m pip install -r requirements.txt")
+            print("Hand sensor off: it needs OpenCV and MediaPipe. "
+                  "Run: python -m pip install -r requirements.txt "
+                  "(or start with --no-camera to skip it)")
         else:
             hands = tracker_module.HandTracker(
                 broadcaster, camera_index=camera_index,
@@ -519,7 +569,7 @@ def main(argv=None):
             hands.start()
 
     try:
-        server = make_server(args.http_port, broadcaster, link)
+        server = make_server(args.http_port, broadcaster, link, hands)
     except OSError:
         print(f"Port {args.http_port} is busy - is the bridge already running? "
               f"Try --http-port {args.http_port + 1}")

@@ -118,7 +118,7 @@ html, body {
   background: var(--red);
 }
 
-/* ---- the three screens ---- */
+/* ---- the four screens ---- */
 #stage {
   position: relative;
   display: grid;
@@ -209,6 +209,16 @@ html, body {
   color: var(--ink-dim);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* Desk (Sprint 3). Deliberately almost empty: the camera compares the desk
+ * with a photo of it, so anything the projector draws here that changes
+ * would look like an object. The outlines are drawn on the desk canvas. */
+#desk-hint {
+  font-size: 3.6vmin;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  min-height: 4.6vmin;
 }
 
 /* ---- bottom legend: doubles as the how-to-use card ---- */
@@ -307,6 +317,7 @@ html, body {
       <div class="tab" data-tab="home">Home</div>
       <div class="tab" data-tab="timer">Timer</div>
       <div class="tab" data-tab="stopwatch">Stopwatch</div>
+      <div class="tab" data-tab="desk">Desk</div>
     </div>
     <div id="status" class="offline">
       <span id="status-dot"></span>
@@ -340,13 +351,18 @@ html, body {
       <div id="watch-status">Ready</div>
     </div>
 
+    <!-- Desk (Sprint 3): the objects on the desk, outlined -->
+    <div class="screen" data-screen="desk">
+      <div id="desk-hint"></div>
+    </div>
+
     <div id="toast"></div>
   </div>
 
   <div id="legend">
     <div class="legend-item" data-button="1"><span class="key">1</span> Change screen</div>
     <div class="legend-item" data-button="2"><span class="key">2</span> Start / pause</div>
-    <div class="legend-item" data-button="3"><span class="key">3</span> Reset</div>
+    <div class="legend-item" data-button="3"><span class="key">3</span> Reset <span id="reset-note"></span></div>
     <div class="legend-item" data-button="4"><span class="key">4</span> Say the time</div>
     <div class="legend-item" data-button="knob"><span class="key">Knob</span> Timer minutes</div>
   </div>
@@ -366,7 +382,7 @@ html, body {
  * count of interval ticks, so a slow or hidden tab stays accurate.
  * ================================================================ */
 
-var SCREENS = ["home", "timer", "stopwatch"];
+var SCREENS = ["home", "timer", "stopwatch", "desk"];
 
 var state = {
   screen: "home",
@@ -392,7 +408,13 @@ var state = {
   /* Sprint 2. hand is {x, y} in desk coordinates - 0 to 1 across the
    * projection, (0,0) top left - or null when the desk is clear. */
   hand: null,
-  demoHand: false        // h key: the mouse stands in for the camera
+  demoHand: false,       // h key: the mouse stands in for the camera
+
+  /* Sprint 3. The objects on the desk, only while the Desk screen shows.
+   * Each is {id, x, y, outline: [[x, y], ...]} in desk coordinates.
+   * objectsState is what the object sensor is doing - see setObjectsHint. */
+  objects: [],
+  objectsState: "off"
 };
 
 var el = {
@@ -408,6 +430,8 @@ var el = {
   timerHint: document.getElementById("timer-hint"),
   watchTime: document.getElementById("watch-time"),
   watchStatus: document.getElementById("watch-status"),
+  deskHint: document.getElementById("desk-hint"),
+  resetNote: document.getElementById("reset-note"),
   legend: document.querySelectorAll(".legend-item"),
   toast: document.getElementById("toast"),
   overlay: document.getElementById("overlay"),
@@ -422,7 +446,12 @@ var el = {
  * ================================================================ */
 
 function showScreen(name) {
+  var wasDesk = state.screen === "desk";
   state.screen = name;
+
+  // Opening or leaving Desk switches the bridge's object sensor on or off.
+  if (wasDesk !== (name === "desk")) { switchObjects(name === "desk"); }
+  el.resetNote.textContent = name === "desk" ? "(clear desk)" : "";
 
   for (var i = 0; i < el.screens.length; i++) {
     var screen = el.screens[i];
@@ -445,9 +474,19 @@ function pressButton(n) {
   if (n === 1) { nextScreen(); return; }
   if (n === 4) { sayTheTime(); return; }
 
-  // Buttons 2 and 3 only mean something on the Timer and Stopwatch.
+  // Buttons 2 and 3 only mean something on the Timer and Stopwatch -
+  // and on Desk, where 3 photographs the empty desk again.
   if (state.screen === "home") {
     showToast("Press 1 to go to the Timer or Stopwatch");
+    return;
+  }
+
+  if (state.screen === "desk") {
+    if (n === 3) {
+      switchObjects(true);
+    } else {
+      showToast("Clear the desk and press 3 to start again");
+    }
     return;
   }
 
@@ -698,6 +737,7 @@ function tick() {
   drawClock(now);
   drawTimer(stamp);
   drawStopwatch();
+  drawDeskHint();
   deskCatchUp(stamp);
 
   if (state.toastUntil && stamp > state.toastUntil) {
@@ -725,10 +765,12 @@ function highlightKey(name) {
 }
 
 /* ================================================================
- * 5. THE DESK LAYER (Sprint 2)
+ * 5. THE DESK LAYER (Sprints 2 and 3)
  *
- * One canvas drawn over the three screens. It is not a fourth screen -
+ * One canvas drawn over every screen. The hand dot shows on all of them -
  * button 1 never switches it off, and the clock keeps running behind it.
+ * The object outlines only show on the Desk screen, because that is the
+ * only screen where the bridge looks for objects.
  *
  * COORDINATES. A position on the desk is two numbers from 0 to 1 across
  * the projection rectangle, (0,0) at the top left. The camera and the
@@ -740,9 +782,13 @@ function highlightKey(name) {
  *   {"type": "hand", "x": 0.42, "y": 0.61}      hand at that spot
  *   {"type": "hand", "present": false}           desk is clear
  *   {"type": "hand_status", "connected": true, "detail": "camera 0 ..."}
+ *   {"type": "objects", "objects": [{"id": 1, "x": 0.4, "y": 0.6,
+ *                                    "outline": [[0.38, 0.55], ...]}]}
+ *   {"type": "objects_status", "state": "capturing"}   see setObjectsHint
  * ================================================================ */
 
 var HAND_RGB = "90, 215, 255";   // --accent, as RGB so it can fade out
+var OBJECT_RGB = "74, 222, 128"; // --green
 
 var deskCtx = el.desk.getContext("2d");
 var deskSize = { w: 0, h: 0, scale: 0 };
@@ -788,6 +834,34 @@ function drawHand(hand) {
   deskCtx.fill();
 }
 
+// One object: its outline, a dot at its middle, and its number.
+function drawObject(object) {
+  var points = object.outline;
+  if (!points || points.length < 3) { return; }
+
+  deskCtx.strokeStyle = "rgba(" + OBJECT_RGB + ", 0.95)";
+  deskCtx.lineWidth = deskLen(0.006);
+  deskCtx.lineJoin = "round";
+  deskCtx.beginPath();
+  deskCtx.moveTo(points[0][0] * deskSize.w, points[0][1] * deskSize.h);
+  for (var i = 1; i < points.length; i++) {
+    deskCtx.lineTo(points[i][0] * deskSize.w, points[i][1] * deskSize.h);
+  }
+  deskCtx.closePath();
+  deskCtx.stroke();
+
+  var x = object.x * deskSize.w;
+  var y = object.y * deskSize.h;
+  deskCtx.fillStyle = "rgba(" + OBJECT_RGB + ", 1)";
+  deskCtx.beginPath();
+  deskCtx.arc(x, y, deskLen(0.007), 0, Math.PI * 2);
+  deskCtx.fill();
+
+  deskCtx.font = "600 " + Math.round(deskLen(0.035)) + "px Segoe UI, system-ui, sans-serif";
+  deskCtx.textBaseline = "bottom";
+  deskCtx.fillText("#" + object.id, x + deskLen(0.015), y - deskLen(0.01));
+}
+
 function drawDeskLayer() {
   // The page can load before the window has a size - the bridge opens it
   // full screen while the cast to the projector is still being set up, so
@@ -799,6 +873,9 @@ function drawDeskLayer() {
 
   deskCtx.clearRect(0, 0, deskSize.w, deskSize.h);
 
+  if (state.screen === "desk") {
+    for (var i = 0; i < state.objects.length; i++) { drawObject(state.objects[i]); }
+  }
   if (state.hand) { drawHand(state.hand); }
 
   el.page.classList.toggle("hand-present", !!state.hand);
@@ -827,6 +904,44 @@ function setHand(x, y) {
 }
 
 function clearHand() { state.hand = null; }
+
+/* ---- the object sensor (Sprint 3) ---- */
+
+// Ask the bridge to start or stop looking for objects. Starting always
+// photographs the empty desk again, so it is also "start again".
+function switchObjects(on) {
+  state.objects = [];
+
+  if (window.location.protocol === "file:" || !window.fetch) {
+    state.objectsState = on ? "unavailable" : "off";
+    return;
+  }
+
+  state.objectsState = on ? "capturing" : "off";
+  fetch("/objects?on=" + (on ? 1 : 0), { method: "POST" })
+    .then(function (response) {
+      if (!response.ok && on) { state.objectsState = "unavailable"; }
+    })
+    .catch(function () {
+      if (on) { state.objectsState = "unavailable"; }
+    });
+}
+
+// The line of text on the Desk screen. It only changes when the sensor's
+// state does, never every frame - see the note on #desk-hint.
+function drawDeskHint() {
+  var text = "";
+  if (state.screen === "desk") {
+    text = {
+      off: "",
+      capturing: "Keep the desk clear — photographing it empty",
+      tracking: state.objects.length ? "" : "Put something on the desk",
+      flooded: "Everything changed. Clear the desk and press 3",
+      unavailable: "The camera is not running"
+    }[state.objectsState] || "";
+  }
+  if (el.deskHint.textContent !== text) { el.deskHint.textContent = text; }
+}
 
 function setHandStatus(on, connected, text) {
   el.handStatus.className = (on ? "on " : "") + (connected ? "connected" : "offline");
@@ -884,22 +999,37 @@ function connectToBridge() {
                     message.connected ? "Hand sensor: connected"
                                       : "Hand sensor: " + (message.detail || "off"));
       if (!message.connected) { clearHand(); }
+    } else if (message.type === "objects") {
+      // Sprint 3. Only kept while Desk is showing; anything else is stale.
+      state.objects = state.screen === "desk" && Array.isArray(message.objects)
+        ? message.objects : [];
+    } else if (message.type === "objects_status") {
+      if (state.screen === "desk" || message.state === "off") {
+        state.objectsState = message.state;
+      }
     }
+  };
+
+  // The bridge was restarted while Desk was showing: switch the sensor back on.
+  stream.onopen = function () {
+    if (state.screen === "desk") { switchObjects(true); }
   };
 
   stream.onerror = function () {
     setStatus("offline", "Bridge not running");
 
-    // Drop the hand rather than leave a stale dot sitting on the desk
-    // while the bridge is gone.
+    // Drop the hand and the objects rather than leave them sitting stale
+    // on the desk while the bridge is gone.
     clearHand();
+    state.objects = [];
   };
 }
 
 /* ================================================================
  * 7. KEYBOARD
  * Keys 1 to 4 stand in for the buttons and the arrows for the knob,
- * so the page can be demoed with no hardware at all.
+ * so the page can be demoed with no hardware at all. On the Desk screen,
+ * c does the same as button 3: photograph the empty desk again.
  * ================================================================ */
 
 // Where the mouse is, in desk coordinates. Only the demo hand uses it.
@@ -923,6 +1053,8 @@ document.addEventListener("keydown", function (event) {
   } else if (event.key === "ArrowDown") {
     highlightKey("knob");
     nudgeTimerMinutes(-1);
+  } else if ((event.key === "c" || event.key === "C") && state.screen === "desk") {
+    pressButton(3);
   } else if (event.key === "h" || event.key === "H") {
     // Demo stand-in for the camera: the mouse plays the part of a hand,
     // so the dot can be checked with nothing plugged in at all.

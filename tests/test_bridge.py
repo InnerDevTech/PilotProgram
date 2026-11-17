@@ -174,3 +174,25 @@ class ServerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CameraChoiceTests(unittest.TestCase):
+    """The hand sensor is on by default, with the C270, unless told otherwise."""
+
+    def choose(self, *argv):
+        from bridge.jarvis_bridge import build_parser, choose_camera
+        return choose_camera(build_parser().parse_args(list(argv)))
+
+    def test_plain_start_uses_the_c270(self):
+        self.assertEqual(self.choose(), "C270")
+
+    def test_camera_picks_another_one(self):
+        self.assertEqual(self.choose("--camera", "1"), "1")
+        self.assertEqual(self.choose("--camera", "OBS"), "OBS")
+
+    def test_no_camera_turns_it_off(self):
+        self.assertIsNone(self.choose("--no-camera"))
+        self.assertIsNone(self.choose("--no-camera", "--camera", "1"))
+
+    def test_old_desk_flag_still_works(self):
+        self.assertEqual(self.choose("--desk"), "C270")

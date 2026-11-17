@@ -25,6 +25,12 @@ The bridge runs it for real:
 
 It needs calibration first - without calibration.json it has no idea which
 part of the camera picture is the desk. Run bridge/calibrate_desk.py once.
+
+Sprint 3: the object sensor shares this camera loop. Only one program can
+open the webcam, and MediaPipe has already found the hand in each frame,
+which the object sensor needs anyway to cut the hand out. It is off until
+the desk page switches to the Desk screen and calls set_objects(True); see
+_track_objects() below and bridge/object_tracker.py.
 """
 
 import argparse
@@ -51,6 +57,13 @@ else:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from bridge import camera, desk_geometry
 
+# The object sensor needs OpenCV too. If that is missing, the hand sensor
+# fails to start anyway, so there is nothing extra to report here.
+try:
+    from bridge import object_tracker
+except ImportError:  # pragma: no cover
+    object_tracker = None
+
 
 # ---------------------------------------------------------------- settings --
 
@@ -76,6 +89,23 @@ MIN_TRACKING_CONFIDENCE = 0.5
 # Don't flood the browser: send a position only when it has actually moved
 # this far across the desk (1/500th of the desk is well under a pixel).
 MOVE_THRESHOLD = 0.002
+
+# ---- the object sensor (Sprint 3), only while the Desk screen is showing --
+
+# When the Desk screen opens, wait this long before photographing the empty
+# desk: time for a hand that pressed a button to get out of the way, and for
+# the webcam's exposure to settle after the page changed.
+OBJECT_SETTLE_SECONDS = 1.0
+
+# Look for objects on every Nth frame only. Background subtraction costs
+# about as much as MediaPipe, and doing it on every frame would halve how
+# smoothly the hand dot moves. Objects sit still; every other frame is plenty.
+OBJECT_EVERY_N_FRAMES = 2
+
+# Objects are re-sent at most this often, and only when one has moved this
+# far across the desk. A new object or a removed one is sent straight away.
+OBJECT_SEND_SECONDS = 0.1
+OBJECT_MOVE_THRESHOLD = 0.004
 
 
 # --------------------------------------------------------------- the model --
@@ -126,6 +156,16 @@ class HandTracker:
         # (hand_status is what tells the page the sensor itself is alive.)
         self._last_present = False
 
+        # The object sensor. set_objects() is called from the web server's
+        # thread; everything else here only runs on the camera thread.
+        self._objects_wanted = False
+        self._recapture_at = None
+        self._detector = None
+        self._objects_state = "off"
+        self._last_objects = None
+        self._last_objects_at = 0.0
+        self._frame_count = 0
+
     # ---- the bits the bridge calls ----
 
     def start(self):
@@ -138,6 +178,16 @@ class HandTracker:
     def status_event(self):
         return {"type": "hand_status", "connected": self.connected,
                 "detail": self.detail}
+
+    def set_objects(self, on):
+        """Turn the object sensor on or off. Safe to call from any thread.
+
+        Turning it on always photographs the empty desk again (after
+        OBJECT_SETTLE_SECONDS), so it doubles as "start again".
+        """
+        if on:
+            self._recapture_at = time.perf_counter() + OBJECT_SETTLE_SECONDS
+        self._objects_wanted = bool(on)
 
     # ---- turning one frame into one message ----
 
@@ -257,6 +307,10 @@ class HandTracker:
                 except ValueError:
                     point = None
 
+            self._frame_count += 1
+            if self._frame_count % OBJECT_EVERY_N_FRAMES == 0:
+                self._track_objects(frame, result.hand_landmarks, width, height)
+
             # A hand held beside the desk is a real hand, but it is not on the
             # desk, so it must not put a dot on the projection.
             found = point is not None and desk_geometry.on_desk(point, margin=0.05)
@@ -274,6 +328,94 @@ class HandTracker:
             else:
                 self._smoother.reset()
                 self._publish(None)
+
+
+    # ---- the object sensor ----
+
+    def _track_objects(self, frame, hand_landmarks, width, height, now=None):
+        """Find the objects in this frame and tell the page, when wanted.
+
+        `hand_landmarks` is MediaPipe's list of hands for this frame, so the
+        hands can be cut out of the picture before looking for objects.
+        """
+        if now is None:
+            now = time.perf_counter()
+
+        if not self._objects_wanted:
+            if self._objects_state != "off":
+                self._set_objects_state("off")
+                self._send_objects({"type": "objects", "objects": []}, now)
+                self._detector = None
+            return
+
+        if object_tracker is None:
+            self._set_objects_state("unavailable")
+            return
+
+        if self._detector is None:
+            self._detector = object_tracker.ObjectDetector((width, height), self._matrix)
+
+        # Read once: set_objects() may change it from the server's thread.
+        recapture_at = self._recapture_at
+        if recapture_at is not None:
+            self._set_objects_state("capturing")
+            if now < recapture_at:
+                return
+            self._recapture_at = None
+            self._detector.recapture()
+            self._send_objects({"type": "objects", "objects": []}, now)
+
+        hands = [[(mark.x * width, mark.y * height) for mark in hand]
+                 for hand in hand_landmarks]
+        objects = self._detector.process(frame, hands, now)
+
+        if not self._detector.ready:
+            return
+        if self._detector.flooded:
+            self._set_objects_state("flooded")
+            return
+
+        self._set_objects_state("tracking")
+        size = self._detector.frame_size
+        self._publish_objects(object_tracker.objects_event(objects, size, self._matrix), now)
+
+    def _set_objects_state(self, name):
+        """Tell the page what the object sensor is doing, when that changes.
+
+        off          the Desk screen is not showing
+        capturing    photographing the empty desk - keep it clear
+        tracking     looking for objects
+        flooded      the whole picture changed (lights, a knock): start again
+        unavailable  OpenCV is missing
+        """
+        if name != self._objects_state:
+            self._objects_state = name
+            self.broadcaster.send({"type": "objects_status", "state": name})
+
+    def _publish_objects(self, event, now):
+        """Send the objects, but only when it is worth sending."""
+        last = self._last_objects
+        if last is not None:
+            before = {item["id"]: item for item in last["objects"]}
+            after = {item["id"]: item for item in event["objects"]}
+
+            # The same objects: only send if one moved, and not too often.
+            if before.keys() == after.keys():
+                if now - self._last_objects_at < OBJECT_SEND_SECONDS:
+                    return
+                moved = any(
+                    abs(after[n]["x"] - before[n]["x"]) > OBJECT_MOVE_THRESHOLD or
+                    abs(after[n]["y"] - before[n]["y"]) > OBJECT_MOVE_THRESHOLD
+                    for n in after)
+                if not moved:
+                    return
+
+        self._send_objects(event, now)
+
+    def _send_objects(self, event, now):
+        self.broadcaster.send(event)
+        self._last_objects = event
+        self._last_objects_at = now
 
 
 # --------------------------------------------------------------- plumbing --
